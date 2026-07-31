@@ -1,0 +1,30 @@
+{
+  "name": "raju-fruits-and-vegetables-billing",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production Wholesale Billing & Customer Management System for Raju Fruits & Vegetables, G R Fruits & Vegetables, and Priyakrishna Fruits & Vegetables",
+  "workspaces": [
+    "shared",
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "build:shared": "npm --prefix shared run build",
+    "build:frontend": "npm --prefix frontend run build",
+    "build:backend": "npm --prefix backend run build",
+    "build": "npm run build:shared && npm run build:backend && npm run build:frontend",
+    "type-check": "npm --prefix shared run type-check && npm --prefix backend run type-check && npm --prefix frontend run type-check",
+    "lint": "npm --prefix frontend run lint && npm --prefix backend run lint",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.1.2",
+    "concurrently": "^10.0.4",
+    "prettier": "^3.2.5",
+    "typescript": "^5.3.3"
+  }
+}

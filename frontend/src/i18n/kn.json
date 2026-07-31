@@ -1,0 +1,166 @@
+{
+  "appName": "ರಾಜು ವೆಜಿಟೆಬಲ್ಸ್ ಮತ್ತು ಫ್ರೂಟ್ಸ್",
+  "appSubtitle": "ಹೋಲ್‌ಸೇಲ್ ಬಿಲ್ಲಿಂಗ್ ಮತ್ತು ಗ್ರಾಹಕರ ನಿರ್ವಹಣಾ ವ್ಯವಸ್ಥೆ",
+  "dashboard": "ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+  "billing": "ಬಿಲ್ಲಿಂಗ್",
+  "orders": "ಆರ್ಡರ್‌ಗಳು",
+  "customers": "ಗ್ರಾಹಕರು",
+  "products": "ಉತ್ಪನ್ನಗಳು",
+  "payments": "ಪಾವತಿಗಳು",
+  "receipts": "ರಸೀದಿಗಳು",
+  "ledger": "ಲೆಡ್ಜರ್ ಪುಸ್ತಕ",
+  "credit_control": "ಸಾಲ ನಿರ್ವಹಣೆ",
+  "reports": "ವರದಿಗಳು",
+  "communication": "ಸಂಪರ್ಕ ಮಾಧ್ಯಮ",
+  "history": "ಇತಿಹಾಸ",
+  "pending": "ಬಾಕಿ ಉಳಿದಿರುವ",
+  "partial": "ಭಾಗಶಃ ಪಾವತಿ",
+  "cleared": "ಪೂರ್ಣಗೊಂಡ ಪಾವತಿ",
+  "backup": "ಡೇಟಾ ಬ್ಯಾಕಪ್",
+  "settings": "ಸೆಟ್ಟಿಂಗ್ಸ್",
+  "profile": "ಬಳಕೆದಾರರ ಪ್ರೊಫೈಲ್",
+  "login": {
+    "title": "ಖಾತೆ ಲಾಗಿನ್",
+    "subtitle": "ನಿಮ್ಮ ಅಂಗಡಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ ಮತ್ತು ಪ್ರವೇಶಿಸಲು ವಿವರಗಳನ್ನು ನಮೂದಿಸಿ",
+    "emailLabel": "ಇಮೇಲ್ ವಿಳಾಸ",
+    "emailPlaceholder": "name@rajuvegetables.com",
+    "passwordLabel": "ಪಾಸ್‌ವರ್ಡ್",
+    "passwordPlaceholder": "ಪಾಸ್‌ವರ್ಡ್ ನಮೂದಿಸಿ",
+    "rememberMe": "ನನ್ನನ್ನು ನೆನಪಿಡಿ (30 ದಿನಗಳು)",
+    "forgotPassword": "ಪಾಸ್‌ವರ್ಡ್ ಮರೆತಿರಾ?",
+    "signInButton": "ಹೋಲ್‌ಸೇಲ್ ಟರ್ಮಿನಲ್‌ಗೆ ಲಾಗಿನ್ ಮಾಡಿ",
+    "signingIn": "ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...",
+    "shopSelectLabel": "ಅಂಗಡಿ ಪ್ರವೇಶ"
+  },
+  "selectShop": {
+    "title": "ಹೋಲ್‌ಸೇಲ್ ಅಂಗಡಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
+    "subtitle": "ನೀವು ಬಹು ಅಂಗಡಿಗಳನ್ನು ನಿರ್ವಹಿಸಲು ಅಧಿಕಾರ ಹೊಂದಿದ್ದೀರಿ. ಮುಂದುವರಿಯಲು ಅಂಗಡಿಯನ್ನು ಆಯ್ಕೆಮಾಡಿ:",
+    "enterShop": "ಅಂಗಡಿ ಪ್ರವೇಶಿಸಿ",
+    "isolationNote": "ಡೇಟಾ ಪ್ರತ್ಯೇಕತೆಯನ್ನು ಕಟ್ಟುನಿಟ್ಟಾಗಿ ನಿರ್ವಹಿಸಲಾಗಿದೆ."
+  },
+  "profile": {
+    "title": "ಬಳಕೆದಾರರ ಪ್ರೊಫೈಲ್",
+    "personalInfo": "ವೈಯಕ್ತಿಕ ಮಾಹಿತಿ",
+    "changePassword": "ಪಾಸ್‌ವರ್ಡ್ ಬದಲಾಯಿಸಿ",
+    "fullName": "ಪೂರ್ಣ ಹೆಸರು",
+    "email": "ಇಮೇಲ್ ವಿಳಾಸ",
+    "mobile": "ಮೊಬೈಲ್ ಸಂಖ್ಯೆ",
+    "role": "ಪಾತ್ರ (Role)",
+    "assignedShops": "ನಿಯೋಜಿಸಲಾದ ಅಂಗಡಿಗಳು",
+    "accountStatus": "ಖಾತೆಯ ಸ್ಥಿತಿ",
+    "lastLogin": "ಕೊನೆಯ ಲಾಗಿನ್ ಸಮಯ",
+    "currentPassword": "ಪ್ರಸ್ತುತ ಪಾಸ್‌ವರ್ಡ್",
+    "newPassword": "ಹೊಸ ಪಾಸ್‌ವರ್ಡ್",
+    "confirmNewPassword": "ಹೊಸ ಪಾಸ್‌ವರ್ಡ್ ದೃಢೀಕರಿಸಿ",
+    "updatePasswordBtn": "ಪಾಸ್‌ವರ್ಡ್ ನವೀಕರಿಸಿ"
+  },
+  "userManagement": {
+    "title": "ಬಳಕೆದಾರರ ನಿರ್ವಹಣೆ",
+    "subtitle": "ಹೊಸ ಬಳಕೆದಾರರನ್ನು ಸೇರಿಸಿ, ಪಾತ್ರಗಳನ್ನು ಹಾಗೂ ಅಂಗಡಿ ಪ್ರವೇಶವನ್ನು ನಿಯೋಜಿಸಿ",
+    "addUser": "ಹೊಸ ಬಳಕೆದಾರರನ್ನು ಸೇರಿಸಿ",
+    "searchPlaceholder": "ಹೆಸರು, ಇಮೇಲ್ ಅಥವಾ ಮೊಬೈಲ್ ಸಂಖ್ಯೆ ಹುಡುಕಿ...",
+    "filterRole": "ಎಲ್ಲಾ ಪಾತ್ರಗಳು",
+    "filterShop": "ಎಲ್ಲಾ ಅಂಗಡಿಗಳು",
+    "filterStatus": "ಎಲ್ಲಾ ಸ್ಥಿತಿಗಳು",
+    "table": {
+      "user": "ಬಳಕೆದಾರರ ಪ್ರೊಫೈಲ್",
+      "contact": "ಸಂಪರ್ಕ ಮಾಹಿತಿ",
+      "role": "ಪಾತ್ರ ಮತ್ತು ಹಕ್ಕುಗಳು",
+      "shops": "ನಿಯೋಜಿತ ಅಂಗಡಿಗಳು",
+      "status": "ಸ್ಥಿತಿ",
+      "actions": "ಕ್ರಿಯೆಗಳು"
+    }
+  },
+  "common": {
+    "logout": "ಲಾಗ್‌ಔಟ್",
+    "active": "ಸಕ್ರಿಯ",
+    "inactive": "ನಿಷ್ಕ್ರಿಯ",
+    "locked": "ಲಾಕ್ ಆಗಿದೆ",
+    "language": "ಭಾಷೆ",
+    "english": "English",
+    "kannada": "ಕನ್ನಡ"
+  },
+  "dashboardTab": {
+    "overview": "ವಿಶ್ಲೇಷಣೆ",
+    "sales": "ಮಾರಾಟದ ಬೆಳವಣಿಗೆ",
+    "payments": "ಪಾವತಿ ವಿಭಜನೆ",
+    "outstanding": "ಬಾಕಿ ಉಳಿದ ಹಣ",
+    "products": "ಉತ್ಪನ್ನಗಳ ವೇಗ",
+    "market": "ಮಾರುಕಟ್ಟೆ ದರಗಳು",
+    "insights": "ಸ್ವಯಂಚಾಲಿತ ವಿಶ್ಲೇಷಣೆ",
+    "todaySales": "ಇಂದಿನ ಮಾರಾಟ",
+    "todayCollection": "ಇಂದಿನ ವಸೂಲಾತಿ",
+    "uncollectedOutstanding": "ಬಾಕಿ ಇರುವ ಒಟ್ಟು ಮೊತ್ತ",
+    "billsToday": "ಇಂದು ಸೃಜಿಸಲಾದ ಬಿಲ್ಲುಗಳು",
+    "paymentStatuses": "ಬಿಲ್ಲಿಂಗ್ ಪಾವತಿಯ ಸ್ಥಿತಿಗಳು",
+    "salesVelocity": "ದೈನಂದಿನ ಮಾರಾಟದ ವೇಗ",
+    "growthComparisons": "ಮಾರಾಟದ ಬೆಳವಣಿಗೆಯ ಹೋಲಿಕೆಗಳು",
+    "paymentDistribution": "ಪಾವತಿ ವಿಧಾನದ ವಿತರಣೆ",
+    "creditHolds": "ಸಾಲದ ಮಿತಿ ಮೀರಿದ ಗ್ರಾಹಕರು",
+    "agingGroups": "ಬಾಕಿ ದಿನಗಳ ವರ್ಗೀಕರಣ",
+    "topProducts": "ಹೆಚ್ಚು ಮಾರಾಟವಾದ ಉತ್ಪನ್ನಗಳು",
+    "leastSold": "ಕಡಿಮೆ ಮಾರಾಟವಾದ ಉತ್ಪನ್ನಗಳು",
+    "priceUpdateIndex": "ದರ ನವೀಕರಣದ ಸೂಚ್ಯಂಕ",
+    "freqUpdated": "ಪದೇ ಪದೇ ಬದಲಾಗುವ ದರಗಳು",
+    "autoInsights": "ಸ್ವಯಂಚಾಲಿತ ವ್ಯವಹಾರದ ವಿಶ್ಲೇಷಣೆ"
+  },
+  "customersTab": {
+    "title": "ಗ್ರಾಹಕರ ನಿರ್ವಹಣೆ",
+    "addCustomer": "ಹೊಸ ಗ್ರಾಹಕರನ್ನು ಸೇರಿಸಿ",
+    "customerName": "ಗ್ರಾಹಕರ ಹೆಸರು",
+    "customerCode": "ಗ್ರಾಹಕರ ಕೋಡ್",
+    "creditLimit": "ಸಾಲದ ಮಿತಿ",
+    "mobileNumber": "ಮೊಬೈಲ್ ಸಂಖ್ಯೆ",
+    "actions": "ಕ್ರಮಗಳು",
+    "save": "ಗ್ರಾಹಕರನ್ನು ಉಳಿಸಿ"
+  },
+  "productsTab": {
+    "title": "ಉತ್ಪನ್ನಗಳ ನಿರ್ವಹಣೆ",
+    "addProduct": "ಹೊಸ ಉತ್ಪನ್ನ ಸೇರಿಸಿ",
+    "productName": "ಉತ್ಪನ್ನದ ಹೆಸರು",
+    "productCode": "ಉತ್ಪನ್ನದ ಕೋಡ್",
+    "defaultPrice": "ಡೀಫಾಲ್ಟ್ ಬೆಲೆ",
+    "unitType": "ಘಟಕದ ಪ್ರಕಾರ",
+    "todayRate": "ಇಂದಿನ ದರ",
+    "updatePrice": "ದರ ನವೀಕರಿಸಿ"
+  },
+  "billingTab": {
+    "title": "ಬಿಲ್ಲಿಂಗ್ ವಿಭಾಗ",
+    "customer": "ಗ್ರಾಹಕರು",
+    "product": "ಉತ್ಪನ್ನ",
+    "quantity": "ಪ್ರಮಾಣ (ಕೆಜಿ/ಮೂಟೆ)",
+    "price": "ದರ (₹)",
+    "addItem": "ಐಟಂ ಸೇರಿಸಿ",
+    "confirmCheckout": "ಖಚಿತಪಡಿಸಿ ಮತ್ತು ಬಿಲ್ ಸೃಜಿಸಿ"
+  },
+  "paymentsTab": {
+    "title": "ಪಾವತಿ ವಸೂಲಾತಿ",
+    "recordCollection": "ವಸೂಲಾತಿ ದಾಖಲಿಸಿ",
+    "customerName": "ಗ್ರಾಹಕರ ಹೆಸರು",
+    "amount": "ವಸೂಲಾತಿ ಮೊತ್ತ",
+    "paymentMode": "ಪಾವತಿ ವಿಧಾನ",
+    "save": "ಉಳಿಸಿ"
+  },
+  "ledgerTab": {
+    "title": "ಲೆಡ್ಜರ್ ಖಾತೆ ಪುಸ್ತಕ",
+    "printStatement": "ಲೆಡ್ಜರ್ ವರದಿ ಮುದ್ರಿಸಿ",
+    "statementReport": "ಲೆಡ್ಜರ್ ಖಾತೆಯ ವರದಿ",
+    "advanceBalance": "ಮುಂಗಡ ಹಣದ ಮೊತ್ತ"
+  },
+  "reportsTab": {
+    "title": "ಹಣಕಾಸು ವರದಿಗಳು",
+    "printReport": "ವರದಿ ಮುದ್ರಿಸಿ",
+    "exportCsv": "CSV ರಫ್ತು ಮಾಡಿ"
+  },
+  "communicationTab": {
+    "title": "ಸಂಪರ್ಕ ಮಾಧ್ಯಮ",
+    "sendWhatsapp": "ವಾಟ್ಸಾಪ್ ಮೂಲಕ ಕಳುಹಿಸಿ",
+    "sendEmail": "ಇಮೇಲ್ ಕಳುಹಿಸಿ"
+  },
+  "settingsTab": {
+    "title": "ಸಿಸ್ಟಮ್ ಸೆಟ್ಟಿಂಗ್ಸ್",
+    "saveSettings": "ಸೆಟ್ಟಿಂಗ್ಸ್ ಉಳಿಸಿ",
+    "downloadBackup": "ಬ್ಯಾಕಪ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+    "uploadBackup": "JSON ಬ್ಯಾಕಪ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ"
+  }
+}

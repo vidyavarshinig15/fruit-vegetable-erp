@@ -1,0 +1,166 @@
+{
+  "appName": "RAJU VEGETABLES AND FRUITS",
+  "appSubtitle": "Wholesale Billing & Customer Management System",
+  "dashboard": "Dashboard",
+  "billing": "Billing",
+  "orders": "Inbound Orders",
+  "customers": "Customers",
+  "products": "Products",
+  "payments": "Payments",
+  "receipts": "Receipts",
+  "ledger": "Ledger Book",
+  "credit_control": "Credit Control",
+  "reports": "Reports",
+  "communication": "Communication",
+  "history": "History",
+  "pending": "Pending",
+  "partial": "Partial Paid",
+  "cleared": "Cleared",
+  "backup": "Data Backup",
+  "settings": "Settings",
+  "profile": "My Profile",
+  "login": {
+    "title": "Account Sign In",
+    "subtitle": "Select your shop & enter credentials to access wholesale portal",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "name@rajuvegetables.com",
+    "passwordLabel": "Password",
+    "passwordPlaceholder": "Enter password",
+    "rememberMe": "Remember Me (30 Days)",
+    "forgotPassword": "Forgot Password?",
+    "signInButton": "Sign In to Wholesale Terminal",
+    "signingIn": "Authenticating...",
+    "shopSelectLabel": "Default Wholesale Shop Access"
+  },
+  "selectShop": {
+    "title": "Select Wholesale Workspace",
+    "subtitle": "You are authorized to access multiple wholesale shops. Choose a workspace to proceed:",
+    "enterShop": "Enter Wholesale Workspace",
+    "isolationNote": "Data isolation enforced. Every transaction will be scoped strictly to the selected shop."
+  },
+  "profile": {
+    "title": "User Account Profile",
+    "personalInfo": "Personal Information",
+    "changePassword": "Change Account Password",
+    "fullName": "Full Name",
+    "email": "Email Address",
+    "mobile": "Mobile Number",
+    "role": "System Access Role",
+    "assignedShops": "Assigned Wholesale Shops",
+    "accountStatus": "Account Status",
+    "lastLogin": "Last Login Timestamp",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "updatePasswordBtn": "Update Security Password"
+  },
+  "userManagement": {
+    "title": "User Account Management",
+    "subtitle": "Create users, assign roles, configure multi-shop access and system permissions",
+    "addUser": "Add New User",
+    "searchPlaceholder": "Search by name, email, or mobile number...",
+    "filterRole": "All System Roles",
+    "filterShop": "All Wholesale Shops",
+    "filterStatus": "All Account Statuses",
+    "table": {
+      "user": "User Profile",
+      "contact": "Contact Info",
+      "role": "Role & Permissions",
+      "shops": "Assigned Shops",
+      "status": "Account Status",
+      "actions": "Manage Actions"
+    }
+  },
+  "common": {
+    "logout": "Sign Out",
+    "active": "Active",
+    "inactive": "Inactive",
+    "locked": "Locked",
+    "language": "Language",
+    "english": "English",
+    "kannada": "Kannada"
+  },
+  "dashboardTab": {
+    "overview": "Overview",
+    "sales": "Sales Growth",
+    "payments": "Payments Splits",
+    "outstanding": "Outstanding Aging",
+    "products": "Product Velocities",
+    "market": "Market Prices",
+    "insights": "Auto Insights",
+    "todaySales": "Today's Sales",
+    "todayCollection": "Today's Collection",
+    "uncollectedOutstanding": "Uncollected Outstanding",
+    "billsToday": "Bills Generated Today",
+    "paymentStatuses": "Billing Payment Statuses",
+    "salesVelocity": "Sales Daily Velocity",
+    "growthComparisons": "Sales Growth Comparisons",
+    "paymentDistribution": "Payment Method Distribution",
+    "creditHolds": "Credit Utilization Holds",
+    "agingGroups": "Aging Group allocations",
+    "topProducts": "Top revenue products",
+    "leastSold": "Least sold items",
+    "priceUpdateIndex": "Price update index",
+    "freqUpdated": "Frequently Updated Products",
+    "autoInsights": "Business Auto Insights"
+  },
+  "customersTab": {
+    "title": "Customer Directory",
+    "addCustomer": "Add Customer",
+    "customerName": "Customer Name",
+    "customerCode": "Customer Code",
+    "creditLimit": "Credit Limit",
+    "mobileNumber": "Mobile Number",
+    "actions": "Actions",
+    "save": "Save Customer"
+  },
+  "productsTab": {
+    "title": "Product Catalog",
+    "addProduct": "Add Product",
+    "productName": "Product Name",
+    "productCode": "Product Code",
+    "defaultPrice": "Default Price",
+    "unitType": "Unit Type",
+    "todayRate": "Today's Rate",
+    "updatePrice": "Update Price"
+  },
+  "billingTab": {
+    "title": "Billing Section",
+    "customer": "Customer",
+    "product": "Product",
+    "quantity": "Quantity",
+    "price": "Price",
+    "addItem": "Add Item",
+    "confirmCheckout": "Confirm & Generate Invoice"
+  },
+  "paymentsTab": {
+    "title": "Payments Collection",
+    "recordCollection": "Record Collection",
+    "customerName": "Customer Name",
+    "amount": "Collection Amount",
+    "paymentMode": "Payment Mode",
+    "save": "Save Collection"
+  },
+  "ledgerTab": {
+    "title": "Ledger Account Timeline",
+    "printStatement": "Print Statement",
+    "statementReport": "STATEMENT REPORT",
+    "advanceBalance": "Advance balance"
+  },
+  "reportsTab": {
+    "title": "Wholesale Financial Reports",
+    "printReport": "Print Report",
+    "exportCsv": "Export CSV"
+  },
+  "communicationTab": {
+    "title": "Communication Cockpit",
+    "sendWhatsapp": "Send via WhatsApp",
+    "sendEmail": "Dispatch Email"
+  },
+  "settingsTab": {
+    "title": "Settings & Security",
+    "saveSettings": "Save Settings",
+    "downloadBackup": "Download Manual Backup",
+    "uploadBackup": "Upload JSON Backup"
+  }
+}

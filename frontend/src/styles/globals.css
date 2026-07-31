@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary: 22 101 52;
+    --primary-foreground: 0 0% 100%;
+    
+    /* Default Green Theme Fallbacks */
+    --color-market-50: #f0fdf4;
+    --color-market-100: #dcfce7;
+    --color-market-200: #bbf7d0;
+    --color-market-300: #86efac;
+    --color-market-400: #4ade80;
+    --color-market-500: #22c55e;
+    --color-market-600: #16a34a;
+    --color-market-700: #15803d;
+    --color-market-800: #166534;
+    --color-market-900: #14532d;
+    --color-market-950: #052e16;
+  }
+
+  body {
+    @apply min-h-screen bg-slate-50 text-slate-900 antialiased font-sans;
+  }
+}
+
+/* Custom Large Touch & High Contrast Utility Classes for Vegetable Market Operators */
+.btn-market-primary {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-market-800 hover:bg-market-900 text-white font-bold text-base rounded-xl shadow-md transition-all duration-200 hover:shadow-lg active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-market-300 disabled:opacity-50 disabled:pointer-events-none;
+}
+
+.btn-market-secondary {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white hover:bg-slate-100 text-slate-800 border-2 border-slate-300 font-bold text-base rounded-xl shadow-sm transition-all duration-200 hover:border-slate-400 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-slate-200 disabled:opacity-50 disabled:pointer-events-none dark:bg-slate-900 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-slate-800;
+}
+
+.btn-market-danger {
+  @apply inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-red-600 hover:bg-red-700 text-white font-bold text-base rounded-xl shadow-md transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-4 focus:ring-red-200 disabled:opacity-50 disabled:pointer-events-none;
+}
+
+.card-market {
+  @apply bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-market-card p-6 transition-all duration-200;
+}
