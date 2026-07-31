@@ -19,23 +19,30 @@ test.describe('Fruits & Vegetables ERP Production Suite', () => {
     const productPage = new ProductPage(page);
     const billingPage = new BillingPage(page);
 
-    // 1. Update Market Rate
+    // 1. Create Customer
+    await customerPage.goto();
+    await customerPage.createCustomer('Raju Customer', 'RC001', 500000, '9876543210');
+
+    // 2. Create Product
     await productPage.goto();
+    await productPage.createProduct('Tomato', 'TOM', 40, 'Kg');
+
+    // 3. Update Market Rate
     await productPage.updateMarketRates('Tomato', 45);
 
-    // 2. Open Billing Checkout
+    // 4. Open Billing Checkout
     await billingPage.goto();
-    await billingPage.createInvoice('Raju Super Admin', [
+    await billingPage.createInvoice('Raju Customer', [
       { name: 'Tomato', qty: 10, rate: 45 },
     ]);
 
-    // 3. Confirm Invoice Generated Success Screen
+    // 5. Confirm Invoice Generated Success Screen
     await expect(page.locator('text=Invoice generated successfully')).toBeVisible();
 
-    // 4. Collect Payment Collection & Receipts
+    // 6. Collect Payment Collection & Receipts
     await page.click('nav >> text=Payments');
     await page.click('button:has-text("Record Collection")');
-    await page.selectOption('select[label="Customer Name"]', { label: 'Raju Super Admin' });
+    await page.selectOption('select[label="Customer Name"]', { label: 'Raju Customer' });
     await page.fill('input[label="Collection Amount (₹)"]', '450');
     await page.selectOption('select[label="Payment Mode"]', 'CASH');
     await page.click('button:has-text("Save Collection")');
@@ -43,7 +50,7 @@ test.describe('Fruits & Vegetables ERP Production Suite', () => {
     // Confirm receipt popup
     await expect(page.locator('text=Receipt generated successfully')).toBeVisible();
 
-    // 5. Check Ledger Account Timeline balance
+    // 7. Check Ledger Account Timeline balance
     await page.click('nav >> text=Ledger');
     await expect(page.locator('tr:has-text("INVOICE")')).toBeVisible();
     await expect(page.locator('tr:has-text("PAYMENT")')).toBeVisible();
@@ -54,7 +61,7 @@ test.describe('Fruits & Vegetables ERP Production Suite', () => {
 
     // 1. Create Invoice
     await billingPage.goto();
-    await billingPage.createInvoice('Raju Super Admin', [
+    await billingPage.createInvoice('Raju Customer', [
       { name: 'Tomato', qty: 20, rate: 50 }, // Total: ₹1000
     ]);
     await expect(page.locator('text=Invoice generated successfully')).toBeVisible();
@@ -62,14 +69,14 @@ test.describe('Fruits & Vegetables ERP Production Suite', () => {
     // 2. Record First Partial Payment
     await page.click('nav >> text=Payments');
     await page.click('button:has-text("Record Collection")');
-    await page.selectOption('select[label="Customer Name"]', { label: 'Raju Super Admin' });
+    await page.selectOption('select[label="Customer Name"]', { label: 'Raju Customer' });
     await page.fill('input[label="Collection Amount (₹)"]', '400');
     await page.click('button:has-text("Save Collection")');
     await expect(page.locator('text=Receipt generated successfully')).toBeVisible();
 
     // 3. Record Second Payment
     await page.click('button:has-text("Record Collection")');
-    await page.selectOption('select[label="Customer Name"]', { label: 'Raju Super Admin' });
+    await page.selectOption('select[label="Customer Name"]', { label: 'Raju Customer' });
     await page.fill('input[label="Collection Amount (₹)"]', '600');
     await page.click('button:has-text("Save Collection")');
     await expect(page.locator('text=Receipt generated successfully')).toBeVisible();
@@ -84,7 +91,7 @@ test.describe('Fruits & Vegetables ERP Production Suite', () => {
     // 1. Record Advance collection
     await page.click('nav >> text=Payments');
     await page.click('button:has-text("Record Collection")');
-    await page.selectOption('select[label="Customer Name"]', { label: 'Raju Super Admin' });
+    await page.selectOption('select[label="Customer Name"]', { label: 'Raju Customer' });
     await page.fill('input[label="Collection Amount (₹)"]', '500'); // Advance
     await page.click('button:has-text("Save Collection")');
     await expect(page.locator('text=Receipt generated successfully')).toBeVisible();
@@ -104,7 +111,7 @@ test.describe('Fruits & Vegetables ERP Production Suite', () => {
     // 1. WhatsApp share workspace
     await page.click('nav >> text=Communication');
     await page.selectOption('select[label="Select message details *"]', 'REMINDER');
-    await page.selectOption('select[label="Select Wholesale Customer *"]', { label: 'Raju Super Admin' });
+    await page.selectOption('select[label="Select Wholesale Customer *"]', { label: 'Raju Customer' });
     await expect(page.locator('button:has-text("Send via WhatsApp")')).toBeEnabled();
 
     // 2. Settings slider controls

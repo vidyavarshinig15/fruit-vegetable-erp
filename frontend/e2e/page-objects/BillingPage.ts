@@ -5,7 +5,7 @@ export class BillingPage {
 
   async goto() {
     await this.page.click('nav >> text=Billing');
-    await expect(this.page.locator('h1')).toContainText('BILLING');
+    await expect(this.page.locator('main h1')).toContainText('Wholesale Invoicing Terminal');
   }
 
   async createInvoice(customerName: string, items: { name: string; qty: number; rate: number }[]) {

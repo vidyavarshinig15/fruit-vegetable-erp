@@ -5,7 +5,7 @@ export class CustomerPage {
 
   async goto() {
     await this.page.click('nav >> text=Customers');
-    await expect(this.page.locator('h1')).toContainText('CUSTOMER');
+    await expect(this.page.locator('main h1')).toContainText('Customer Directory');
   }
 
   async createCustomer(name: string, code: string, creditLimit: number, mobile: string) {

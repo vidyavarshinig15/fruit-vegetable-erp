@@ -17,6 +17,6 @@ export class LoginPage {
     // Select shop context cards
     await this.page.click(`text=${shopName}`);
     // Wait for dashboard loading
-    await expect(this.page.locator('h1')).toContainText(shopName.toUpperCase());
+    await expect(this.page.locator('main h1')).toContainText(shopName.toUpperCase());
   }
 }

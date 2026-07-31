@@ -5,7 +5,7 @@ export class ProductPage {
 
   async goto() {
     await this.page.click('nav >> text=Products');
-    await expect(this.page.locator('h1')).toContainText('PRODUCTS');
+    await expect(this.page.locator('main h1')).toContainText('Wholesale Catalog & Price List');
   }
 
   async createProduct(name: string, code: string, price: number, unit: string) {
