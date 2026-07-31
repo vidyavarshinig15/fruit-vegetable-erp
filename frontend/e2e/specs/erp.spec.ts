@@ -1,8 +1,8 @@
 import { test, expect } from '@playwright/test';
-import { LoginPage } from '../page-objects/LoginPage';
-import { CustomerPage } from '../page-objects/CustomerPage';
-import { ProductPage } from '../page-objects/ProductPage';
-import { BillingPage } from '../page-objects/BillingPage';
+import { LoginPage } from '../page-objects/LoginPage.ts';
+import { CustomerPage } from '../page-objects/CustomerPage.ts';
+import { ProductPage } from '../page-objects/ProductPage.ts';
+import { BillingPage } from '../page-objects/BillingPage.ts';
 
 test.describe('Fruits & Vegetables ERP Production Suite', () => {
 
