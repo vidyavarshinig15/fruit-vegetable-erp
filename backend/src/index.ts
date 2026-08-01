@@ -31,11 +31,37 @@ app.get('/health', (_req, res) => {
 
 app.use(config.apiPrefix, routes);
 
+import { db } from './database/index.js';
+
+async function ensureSystemUser() {
+  try {
+    const systemUserId = '00000000-0000-0000-0000-000000000000';
+    const rows = await db.query(`users?id=eq.${systemUserId}`);
+    if (rows.length === 0) {
+      logger.info('System user not found in database. Seeding system auditor user...');
+      await db.query('users', {
+        method: 'POST',
+        body: {
+          id: systemUserId,
+          email: 'system.auditor@rajuvegetables.com',
+          full_name: 'System Auditor',
+          is_super_admin: true,
+          status: 'active'
+        }
+      });
+      logger.info('System auditor user seeded successfully!');
+    }
+  } catch (error) {
+    logger.error('Failed to ensure/seed system auditor user:', error);
+  }
+}
+
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(config.port, () => {
     logger.info(`Server running on port ${config.port} (${config.env})`);
+    ensureSystemUser();
   });
 }
 

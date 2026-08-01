@@ -125,7 +125,7 @@ export const PaymentsPage: React.FC = () => {
 
         <Link to="/payments/new">
           <Button variant="primary" className="inline-flex items-center gap-2 shadow-lg py-2.5">
-            <PlusCircle className="w-5 h-5" /> Receive Payment
+            <PlusCircle className="w-5 h-5" /> Record Collection
           </Button>
         </Link>
       </div>
@@ -215,7 +215,7 @@ export const PaymentsPage: React.FC = () => {
             actionButton={
               <Link to="/payments/new">
                 <Button variant="primary" className="mt-2">
-                  Record First Payment
+                  Record Collection
                 </Button>
               </Link>
             }

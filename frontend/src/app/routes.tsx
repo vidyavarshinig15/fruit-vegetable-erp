@@ -31,12 +31,14 @@ import { PaymentDetailsPage } from '@/pages/payments/PaymentDetailsPage';
 import { ReceiptsPage } from '@/pages/receipts/ReceiptsPage';
 import { LedgerPage } from '@/pages/ledger/LedgerPage';
 import { CustomerStatementPage } from '@/pages/ledger/CustomerStatementPage';
-import { CreditManagementPage } from '@/pages/ledger/CreditManagementPage';
 import { ReportsPage } from '@/pages/reports/ReportsPage';
-import { CommunicationDashboard } from '@/pages/communication/CommunicationDashboard';
 import { BackupPage } from '@/pages/backup/BackupPage';
 import { SettingsPage } from '@/pages/settings/SettingsPage';
 import { NotFoundPage } from '@/pages/common/NotFoundPage';
+import { HistoryPage } from '@/pages/billing/HistoryPage';
+import { PendingPage } from '@/pages/billing/PendingPage';
+import { PartialPage } from '@/pages/billing/PartialPage';
+import { ClearedPage } from '@/pages/billing/ClearedPage';
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -73,6 +75,10 @@ export const AppRoutes: React.FC = () => {
         <Route path="/billing" element={<BillingPage />} />
         <Route path="/billing/invoices" element={<InvoiceListPage />} />
         <Route path="/billing/invoices/:id" element={<InvoiceDetailsPage />} />
+        <Route path="/history" element={<HistoryPage />} />
+        <Route path="/pending" element={<PendingPage />} />
+        <Route path="/partial" element={<PartialPage />} />
+        <Route path="/cleared" element={<ClearedPage />} />
         
         {/* Uploaded Orders OCR Routes */}
         <Route path="/orders" element={<OrderListPage />} />
@@ -85,9 +91,7 @@ export const AppRoutes: React.FC = () => {
         <Route path="/receipts" element={<ReceiptsPage />} />
         <Route path="/ledger" element={<LedgerPage />} />
         <Route path="/ledger/statement" element={<CustomerStatementPage />} />
-        <Route path="/ledger/credit" element={<CreditManagementPage />} />
         <Route path="/reports" element={<ReportsPage />} />
-        <Route path="/communication" element={<CommunicationDashboard />} />
         <Route path="/backup" element={<BackupPage />} />
         <Route path="/settings" element={<SettingsPage />} />
       </Route>

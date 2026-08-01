@@ -10,6 +10,17 @@ const tokenBlacklist = new Set<string>();
 
 export class AuthService {
   async login(dto: LoginDTO, ipAddress: string, userAgent: string): Promise<AuthResponseData> {
+    if (dto.email.toLowerCase().trim() !== 'vidyavarshini15@gmail.com') {
+      await activityRepository.create({
+        userEmail: dto.email,
+        action: 'FAILED_LOGIN',
+        details: { reason: 'Unauthorized email access restriction' },
+        ipAddress,
+        userAgent,
+      });
+      throw new Error('INVALID_CREDENTIALS');
+    }
+
     const userRecord = await userRepository.findByEmail(dto.email);
 
     if (!userRecord) {

@@ -1,6 +1,6 @@
 {
   "appName": "RAJU VEGETABLES AND FRUITS",
-  "appSubtitle": "Wholesale Billing & Customer Management System",
+  "appSubtitle": "Billing & Customer Management System",
   "dashboard": "Dashboard",
   "billing": "Billing",
   "orders": "Inbound Orders",
@@ -18,7 +18,7 @@
   "cleared": "Cleared",
   "backup": "Data Backup",
   "settings": "Settings",
-  "profile": "My Profile",
+  "navProfile": "My Profile",
   "login": {
     "title": "Account Sign In",
     "subtitle": "Select your shop & enter credentials to access wholesale portal",
@@ -28,14 +28,14 @@
     "passwordPlaceholder": "Enter password",
     "rememberMe": "Remember Me (30 Days)",
     "forgotPassword": "Forgot Password?",
-    "signInButton": "Sign In to Wholesale Terminal",
+    "signInButton": "Sign In to Billing Terminal",
     "signingIn": "Authenticating...",
-    "shopSelectLabel": "Default Wholesale Shop Access"
+    "shopSelectLabel": "Default Shop Access"
   },
   "selectShop": {
-    "title": "Select Wholesale Workspace",
-    "subtitle": "You are authorized to access multiple wholesale shops. Choose a workspace to proceed:",
-    "enterShop": "Enter Wholesale Workspace",
+    "title": "Select Shop Workspace",
+    "subtitle": "You are authorized to access multiple shops. Choose a workspace to proceed:",
+    "enterShop": "Enter Workspace",
     "isolationNote": "Data isolation enforced. Every transaction will be scoped strictly to the selected shop."
   },
   "profile": {
@@ -46,7 +46,7 @@
     "email": "Email Address",
     "mobile": "Mobile Number",
     "role": "System Access Role",
-    "assignedShops": "Assigned Wholesale Shops",
+    "assignedShops": "Assigned Shops",
     "accountStatus": "Account Status",
     "lastLogin": "Last Login Timestamp",
     "currentPassword": "Current Password",
@@ -60,7 +60,7 @@
     "addUser": "Add New User",
     "searchPlaceholder": "Search by name, email, or mobile number...",
     "filterRole": "All System Roles",
-    "filterShop": "All Wholesale Shops",
+    "filterShop": "All Shops",
     "filterStatus": "All Account Statuses",
     "table": {
       "user": "User Profile",
@@ -148,7 +148,7 @@
     "advanceBalance": "Advance balance"
   },
   "reportsTab": {
-    "title": "Wholesale Financial Reports",
+    "title": "Financial Reports",
     "printReport": "Print Report",
     "exportCsv": "Export CSV"
   },

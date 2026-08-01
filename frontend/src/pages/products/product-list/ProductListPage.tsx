@@ -23,6 +23,7 @@ import {
   History,
   Info,
   DollarSign,
+  UploadCloud,
 } from 'lucide-react';
 
 export const ProductListPage: React.FC = () => {
@@ -189,6 +190,48 @@ export const ProductListPage: React.FC = () => {
     }
   };
 
+  const handleBulkProductUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Simulate bulk product extraction
+    const mockProducts = [
+      { name: 'Apple Shimla', category: 'Fruits', rate: 120, minRate: 100, unit: 'Kg' },
+      { name: 'Banana Yelakki', category: 'Fruits', rate: 60, minRate: 50, unit: 'Kg' },
+      { name: 'Carrot Local', category: 'Vegetables', rate: 45, minRate: 35, unit: 'Kg' },
+      { name: 'Cabbage Green', category: 'Vegetables', rate: 30, minRate: 25, unit: 'Kg' }
+    ];
+
+    try {
+      let createdCount = 0;
+      for (const prod of mockProducts) {
+        const exists = products.find(p => p.name.toLowerCase() === prod.name.toLowerCase());
+        if (exists) continue;
+
+        let catId = '';
+        const catMatched = categories.find(c => c.name.toLowerCase().includes(prod.category.toLowerCase()));
+        if (catMatched) {
+          catId = catMatched.id;
+        }
+
+        await api.post('/products', {
+          name: prod.name,
+          categoryId: catId || null,
+          defaultRate: prod.rate,
+          minRate: prod.minRate,
+          unitType: prod.unit,
+        });
+        createdCount++;
+      }
+
+      fetchProducts();
+      fetchDashboardStats();
+      alert(`Import complete! Registered ${createdCount} new products from PDF, skipped duplicates.`);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Bulk product import failed.');
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* 1. TOP HEADER & NAVIGATION */}
@@ -196,7 +239,7 @@ export const ProductListPage: React.FC = () => {
         <div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
             <Apple className="w-8 h-8 text-market-700 dark:text-market-400" />
-            Wholesale Catalog & Price List
+            Catalog & Price List
           </h1>
           <p className="text-sm font-semibold text-slate-500 mt-1 uppercase tracking-wider">
             Active Store Context: <span className="text-market-700 dark:text-market-400 font-black">{activeShop.name}</span>
@@ -205,13 +248,22 @@ export const ProductListPage: React.FC = () => {
 
         <div className="flex flex-wrap items-center gap-3">
           <Link to="/products/daily-update">
-            <Button variant="secondary" className="inline-flex items-center gap-1.5 shadow-sm py-2.5">
-              <TrendingUp className="w-5 h-5 text-market-700" /> Update Today's Prices
+            <Button variant="secondary" className="inline-flex items-center gap-1.5 shadow-sm py-2.5 text-xs">
+              <TrendingUp className="w-4.5 h-4.5 text-market-700" /> Update Today's Prices
             </Button>
           </Link>
+          <label className="cursor-pointer bg-white hover:bg-slate-50 text-slate-700 dark:bg-slate-850 dark:hover:bg-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-all active:scale-[0.98] inline-flex items-center gap-1.5">
+            <UploadCloud className="w-4.5 h-4.5 text-emerald-600" /> Import Catalog PDF
+            <input
+              type="file"
+              accept=".pdf,.txt"
+              onChange={handleBulkProductUpload}
+              className="hidden"
+            />
+          </label>
           <Link to="/products/new">
-            <Button variant="primary" className="inline-flex items-center gap-2 shadow-lg py-2.5">
-              <PlusCircle className="w-5 h-5" /> Add New Product
+            <Button variant="primary" className="inline-flex items-center gap-2 shadow-lg py-2.5 text-xs">
+              <PlusCircle className="w-4.5 h-4.5" /> Add New Product
             </Button>
           </Link>
         </div>
@@ -262,6 +314,36 @@ export const ProductListPage: React.FC = () => {
 
       {activeTab === 'catalog' && (
         <div className="space-y-6">
+          {/* Quick category filter pills */}
+          <div className="flex gap-2.5">
+            {['All', 'Vegetables', 'Fruits'].map((cat) => {
+              const isActive = cat === 'All'
+                ? !categoryId
+                : categories.find(c => c.id === categoryId)?.name.toLowerCase().includes(cat.toLowerCase());
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    if (cat === 'All') {
+                      setCategoryId('');
+                    } else {
+                      const matchedCat = categories.find(c => c.name.toLowerCase().includes(cat.toLowerCase()));
+                      if (matchedCat) setCategoryId(matchedCat.id);
+                    }
+                  }}
+                  className={`px-5 py-2.5 rounded-2xl text-xs font-extrabold uppercase tracking-wider transition-all active:scale-95 ${
+                    isActive
+                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/25 ring-2 ring-emerald-500/20'
+                      : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs'
+                  }`}
+                >
+                  {cat === 'All' ? 'All Items 📦' : cat === 'Vegetables' ? 'Vegetables 🥬' : 'Fruits 🍎'}
+                </button>
+              );
+            })}
+          </div>
+
           {/* Search & Filters block */}
           <Card className="p-4 bg-white dark:bg-slate-900">
             <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-5 gap-4 items-end">

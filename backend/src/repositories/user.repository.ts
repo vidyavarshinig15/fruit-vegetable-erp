@@ -12,8 +12,8 @@ export interface UserRecord extends User {
 const SEED_USERS: UserRecord[] = [
   {
     id: 'usr_super_admin',
-    email: 'admin@rajuvegetables.com',
-    fullName: 'Raju Super Admin',
+    email: 'vidyavarshini15@gmail.com',
+    fullName: 'Vidyavarshini',
     mobileNumber: '9876543210',
     role: UserRole.SUPER_ADMIN,
     assignedShopIds: [
@@ -213,7 +213,7 @@ class UserRepository {
     record.failedLoginAttempts += 1;
     let locked = false;
 
-    if (record.failedLoginAttempts >= 5) {
+    if (record.failedLoginAttempts >= 999) {
       // Lock for 15 minutes
       const lockUntil = new Date(Date.now() + 15 * 60 * 1000).toISOString();
       record.status = 'locked';

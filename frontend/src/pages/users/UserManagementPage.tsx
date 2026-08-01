@@ -270,9 +270,9 @@ export const UserManagementPage: React.FC = () => {
                             key={sid}
                             className="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded text-[10px] font-bold"
                           >
-                            {sid === 'RAJ_FRUITS_AND_VEGETABLES'
+                            {sid === ShopId.RAJ_FRUITS_AND_VEGETABLES
                               ? 'RAJ'
-                              : sid === 'G_R_FRUITS_AND_VEGETABLES'
+                              : sid === ShopId.G_R_FRUITS_AND_VEGETABLES
                               ? 'G R'
                               : 'PRIYA'}
                           </span>

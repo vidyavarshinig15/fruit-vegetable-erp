@@ -41,7 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setAccessToken(null);
     localStorage.removeItem(AUTH_STORAGE_KEY);
-    localStorage.removeItem('raju_active_shop');
+    localStorage.removeItem('raju_billing_active_shop');
   }, []);
 
   const login = async (dto: LoginDTO): Promise<User> => {

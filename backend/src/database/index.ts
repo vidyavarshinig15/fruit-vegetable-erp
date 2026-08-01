@@ -12,6 +12,22 @@ const restUrl = SUPABASE_URL.endsWith('/')
   ? `${SUPABASE_URL}rest/v1`
   : `${SUPABASE_URL}/rest/v1`;
 
+const sanitizeBodyUUIDs = (body: any) => {
+  if (!body || typeof body !== 'object') return body;
+  const uuidKeys = ['created_by', 'updated_by', 'deleted_by', 'p_created_by', 'p_updated_by'];
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const sanitized = { ...body };
+  for (const key of Object.keys(sanitized)) {
+    if (uuidKeys.includes(key)) {
+      const val = sanitized[key];
+      if (typeof val === 'string' && !uuidRegex.test(val)) {
+        sanitized[key] = null;
+      }
+    }
+  }
+  return sanitized;
+};
+
 export const db = {
   /**
    * Run a PostgREST query on a Supabase table.
@@ -40,12 +56,13 @@ export const db = {
     }
 
     const url = `${restUrl}/${path}`;
+    const sanitizedBody = options.body ? sanitizeBodyUUIDs(options.body) : undefined;
 
     try {
       const response = await fetch(url, {
         method,
         headers,
-        body: options.body ? JSON.stringify(options.body) : undefined,
+        body: sanitizedBody ? JSON.stringify(sanitizedBody) : undefined,
       });
 
       if (!response.ok) {

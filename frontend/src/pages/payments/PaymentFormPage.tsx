@@ -273,10 +273,10 @@ export const PaymentFormPage: React.FC = () => {
       ) : (
         /* FORM ENTRY VIEW */
         <form onSubmit={handleProceedToConfirm} className="space-y-6">
-          <Card title="Wholesale customer selector" subtitle="Identify the party paying outstanding balances.">
+          <Card title="Buyer customer selector" subtitle="Identify the party paying outstanding balances.">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Select
-                label="Wholesale Buyer Customer *"
+                label="Buyer Customer *"
                 required
                 value={customerId}
                 onChange={handleCustomerChange}

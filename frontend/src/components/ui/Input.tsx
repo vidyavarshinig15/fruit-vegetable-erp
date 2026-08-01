@@ -18,6 +18,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         )}
         <input
           ref={ref}
+          {...({ label } as any)}
           className={cn(
             'w-full px-4 py-3 bg-white dark:bg-slate-900 border-2 border-slate-300 dark:border-slate-700 rounded-xl text-base text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-market-700 focus:ring-4 focus:ring-market-100 dark:focus:ring-market-900/40 transition-all duration-200',
             error && 'border-red-500 focus:border-red-600 focus:ring-red-100',

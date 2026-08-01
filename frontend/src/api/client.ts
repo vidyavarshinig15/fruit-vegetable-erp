@@ -24,7 +24,7 @@ api.interceptors.request.use((config) => {
     }
   }
 
-  const activeShop = localStorage.getItem('raju_active_shop');
+  const activeShop = localStorage.getItem('raju_billing_active_shop');
   if (activeShop) {
     config.headers['X-Shop-Id'] = activeShop;
   }

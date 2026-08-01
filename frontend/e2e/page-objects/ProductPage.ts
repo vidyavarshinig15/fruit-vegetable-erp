@@ -5,28 +5,30 @@ export class ProductPage {
 
   async goto() {
     await this.page.click('nav >> text=Products');
-    await expect(this.page.locator('main h1')).toContainText('Wholesale Catalog & Price List');
+    await expect(this.page.locator('main h1')).toContainText('Catalog & Price List');
   }
 
   async createProduct(name: string, code: string, price: number, unit: string) {
-    await this.page.click('button:has-text("Add Product")');
-    await this.page.fill('input[label="Product Name *"]', name);
-    await this.page.fill('input[label="Product Code *"]', code);
-    await this.page.fill('input[label="Default Price (₹) *"]', String(price));
-    await this.page.selectOption('select[label="Unit Type *"]', unit);
-    await this.page.click('button[type="submit"]');
+    await this.page.click('button:has-text("Add New Product")');
+    await this.page.fill('input[label="Product English Name *"]', name);
+    await this.page.selectOption('select[label="Wholesale Billing Unit *"]', unit);
+    await this.page.fill('input[label="Today\'s Selling Rate (₹) *"]', String(price));
+    await this.page.fill('input[label="Minimum Floor Limit Price (₹) *"]', String(price - 5));
+    await this.page.click('button:has-text("Save Product Catalog")');
 
-    // Success popup
-    await expect(this.page.locator('text=Product created successfully')).toBeVisible();
+    // Confirm redirected to Catalog listing with the new product visible
+    await expect(this.page.locator('main h1')).toContainText('Catalog & Price List', { timeout: 15000 });
+    await expect(this.page.locator(`text=${name}`)).toBeVisible({ timeout: 15000 });
   }
 
   async updateMarketRates(productName: string, rate: number) {
     // Open product edit
-    await this.page.click(`tr:has-text("${productName}") >> button:has-text("Edit")`);
-    await this.page.fill('input[label="Today\'s Rate (₹)"]', String(rate));
-    await this.page.click('button:has-text("Update Price")');
+    await this.page.click(`tr:has-text("${productName}") >> a[title="Edit Details"]`);
+    await this.page.fill('input[label="Today\'s Selling Rate (₹) *"]', String(rate));
+    await this.page.click('button:has-text("Save Product Catalog")');
 
-    // Confirm updates
-    await expect(this.page.locator('text=Price updated successfully')).toBeVisible();
+    // Confirm redirected to Catalog listing with the new rate reflected
+    await expect(this.page.locator('main h1')).toContainText('Catalog & Price List', { timeout: 15000 });
+    await expect(this.page.locator(`tr:has-text("${productName}")`)).toContainText(String(rate), { timeout: 15000 });
   }
 }

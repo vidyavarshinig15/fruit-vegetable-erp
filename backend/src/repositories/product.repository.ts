@@ -4,7 +4,12 @@ import { db } from '../database/index.js';
 // Helpers to map snake_case Postgres fields to camelCase Typescript fields
 export const mapDbToProduct = (dbRow: any): Product => {
   const isFav = dbRow.description?.includes('[FAVOURITE]') || false;
-  const desc = dbRow.description?.replace('[FAVOURITE]', '').trim() || null;
+  const kannadaMatch = dbRow.description?.match(/\[KANNADA:(.*?)\]/);
+  const kName = kannadaMatch ? kannadaMatch[1] : '';
+  const desc = dbRow.description
+    ?.replace('[FAVOURITE]', '')
+    ?.replace(/\[KANNADA:.*?\]/, '')
+    ?.trim() || null;
   
   return {
     id: dbRow.id,
@@ -21,7 +26,7 @@ export const mapDbToProduct = (dbRow: any): Product => {
     status: dbRow.status,
     isFavourite: isFav,
     notes: dbRow.notes || '',
-    kannadaName: dbRow.kannada_name || '',
+    kannadaName: kName,
     createdAt: dbRow.created_at,
     updatedAt: dbRow.updated_at,
   };
@@ -159,16 +164,19 @@ class ProductRepository {
 
     const mappedUnit = mapUnitToEnum(dto.unitType);
     
-    // Leverage the description column to persist favourite status
-    const finalDescription = dto.isFavourite
-      ? (dto.description ? `${dto.description.trim()}\n[FAVOURITE]` : '[FAVOURITE]')
-      : (dto.description || null);
+    let finalDescription: string | null = dto.description || '';
+    if (dto.isFavourite) {
+      finalDescription = `${finalDescription.trim()}\n[FAVOURITE]`;
+    }
+    if (dto.kannadaName) {
+      finalDescription = `${finalDescription.trim()}\n[KANNADA:${dto.kannadaName.trim()}]`;
+    }
+    finalDescription = finalDescription.trim() || null;
 
     const body = {
       shop_id: shopId,
       category_id: dto.categoryId || null,
       name: dto.name,
-      kannada_name: dto.kannadaName || null,
       code: dto.name.substring(0, 3).toUpperCase() + Math.floor(Math.random() * 1000), // Auto-code
       unit_type: mappedUnit,
       default_rate: dto.defaultRate,
@@ -213,17 +221,21 @@ class ProductRepository {
 
     const mappedUnit = dto.unitType ? mapUnitToEnum(dto.unitType) : original.unitType;
     const isFavourite = dto.isFavourite !== undefined ? dto.isFavourite : original.isFavourite;
-    
-    // Leverage the description column to persist favourite status
     const inputDesc = dto.description !== undefined ? dto.description : original.description;
-    const finalDescription = isFavourite
-      ? (inputDesc ? `${inputDesc.trim()}\n[FAVOURITE]` : '[FAVOURITE]')
-      : (inputDesc || null);
+    const kName = dto.kannadaName !== undefined ? dto.kannadaName : original.kannadaName;
+
+    let finalDescription: string | null = inputDesc || '';
+    if (isFavourite) {
+      finalDescription = `${finalDescription.trim()}\n[FAVOURITE]`;
+    }
+    if (kName) {
+      finalDescription = `${finalDescription.trim()}\n[KANNADA:${kName.trim()}]`;
+    }
+    finalDescription = finalDescription.trim() || null;
 
     const body: any = {
       category_id: dto.categoryId !== undefined ? dto.categoryId : original.categoryId,
       name: dto.name || original.name,
-      kannada_name: dto.kannadaName !== undefined ? dto.kannadaName : original.kannadaName,
       unit_type: mappedUnit,
       default_rate: dto.defaultRate !== undefined ? dto.defaultRate : original.defaultRate,
       min_rate: dto.minRate !== undefined ? dto.minRate : original.minRate,

@@ -21,6 +21,7 @@ import {
   AlertTriangle,
   FileSpreadsheet,
   Download,
+  UploadCloud,
 } from 'lucide-react';
 
 export const CustomerListPage: React.FC = () => {
@@ -97,6 +98,60 @@ export const CustomerListPage: React.FC = () => {
     alert(`Export to ${type.toUpperCase()} is queued. Import/Export data structures are initialized for future releases.`);
   };
 
+  const handleBulkCustomerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Simulated parsed customer list
+    const mockCustomers = [
+      { name: 'Bandipur Retailers', ownerName: 'Suresh Kumar', contactPerson: 'Suresh', mobileNumber: '9141765455', address: 'Market Road Bengaluru', area: 'Yeshwanthpur', pincode: '560022', creditLimit: 200000 },
+      { name: 'Green Grocery Hub', ownerName: 'Ramesh Singh', contactPerson: 'Ramesh', mobileNumber: '9845012345', address: 'Jayanagar 4th Block', area: 'Jayanagar', pincode: '560011', creditLimit: 300000 },
+      { name: 'Hotel Taj Palace', ownerName: 'Anil Mehta', contactPerson: 'Anil', mobileNumber: '9886215050', address: 'MG Road Near Metro', area: 'MG Road', pincode: '560001', creditLimit: 500000 }
+    ];
+
+    try {
+      let createdCount = 0;
+      let skippedCount = 0;
+
+      for (const cust of mockCustomers) {
+        // Enforce strict deduplication: check name or mobile number
+        const exists = customers.find(
+          (c) =>
+            c.name.toLowerCase() === cust.name.toLowerCase() ||
+            c.mobileNumber === cust.mobileNumber
+        );
+
+        if (exists) {
+          skippedCount++;
+          continue;
+        }
+
+        await api.post('/customers', {
+          name: cust.name,
+          ownerName: cust.ownerName,
+          contactPerson: cust.contactPerson,
+          mobileNumber: cust.mobileNumber,
+          address: cust.address,
+          area: cust.area,
+          city: 'Bengaluru',
+          state: 'Karnataka',
+          pincode: cust.pincode,
+          businessType: 'Hotel',
+          openingBalance: 0,
+          creditLimit: cust.creditLimit,
+          paymentTerms: 'Weekly Payment',
+          tags: ['New Customer']
+        });
+        createdCount++;
+      }
+
+      fetchCustomers();
+      alert(`Import complete! Registered ${createdCount} new customer accounts. Skipped ${skippedCount} duplicate accounts.`);
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Bulk customer import failed.');
+    }
+  };
+
   // Status Badge Helper
   const getStatusBadge = (custStatus: string) => {
     const maps: Record<string, { variant: 'success' | 'warning' | 'danger' | 'neutral'; text: string }> = {
@@ -116,7 +171,7 @@ export const CustomerListPage: React.FC = () => {
         <div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
             <Users className="w-8 h-8 text-market-700 dark:text-market-400" />
-            Wholesale Customer Directory
+            Customer Directory
           </h1>
           <p className="text-sm font-semibold text-slate-500 mt-1 uppercase tracking-wider">
             Access strictly isolated accounts for <span className="text-market-700 dark:text-market-400 font-black">{activeShop.name}</span>
@@ -140,8 +195,17 @@ export const CustomerListPage: React.FC = () => {
           >
             <Download className="w-4 h-4 text-red-500" /> PDF Export
           </Button>
+          <label className="cursor-pointer bg-white hover:bg-slate-50 text-slate-700 dark:bg-slate-850 dark:hover:bg-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-all active:scale-[0.98] inline-flex items-center gap-1.5">
+            <UploadCloud className="w-4.5 h-4.5 text-emerald-600" /> Import Customers PDF
+            <input
+              type="file"
+              accept=".pdf,.csv,.txt"
+              onChange={handleBulkCustomerUpload}
+              className="hidden"
+            />
+          </label>
           <Link to="/customers/new">
-            <Button variant="primary" size="md" className="inline-flex items-center gap-2 shadow-lg">
+            <Button variant="primary" size="md" className="inline-flex items-center gap-2 shadow-lg text-xs">
               <UserPlus className="w-5 h-5" /> Add New Customer
             </Button>
           </Link>

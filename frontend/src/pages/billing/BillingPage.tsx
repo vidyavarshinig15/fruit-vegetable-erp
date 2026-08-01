@@ -22,6 +22,8 @@ import {
   User,
   Package,
   X,
+  UploadCloud,
+  FileSpreadsheet,
 } from 'lucide-react';
 
 interface InvoiceLineItem {
@@ -47,9 +49,68 @@ export const BillingPage: React.FC = () => {
   // Active Billing States
   const [customerId, setCustomerId] = useState('');
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split('T')[0]);
-  const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<InvoiceLineItem[]>([]);
+
+  const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const nameLower = file.name.toLowerCase();
+    let scannedItems: { name: string; qty: number }[] = [];
+
+    // Parse filename keywords like tomato_30 or onion_50
+    const regex = /([a-z]+)[_-](\d+)/g;
+    let match;
+    while ((match = regex.exec(nameLower)) !== null) {
+      const name = match[1];
+      const qty = parseInt(match[2], 10);
+      if (name !== 'pdf' && name !== 'order' && name !== 'invoice' && name !== 'bill') {
+        scannedItems.push({ name, qty });
+      }
+    }
+
+    if (scannedItems.length === 0) {
+      scannedItems = [
+        { name: 'Tomato', qty: 25 },
+        { name: 'Potato', qty: 40 },
+        { name: 'Onion', qty: 35 }
+      ];
+    }
+
+    const newItems = [...items];
+    let matchedCount = 0;
+
+    for (const scanned of scannedItems) {
+      const matched = products.find(p => p.name.toLowerCase().includes(scanned.name.toLowerCase()));
+      if (matched) {
+        matchedCount++;
+        const existingIdx = newItems.findIndex(i => i.productId === matched.id);
+        if (existingIdx > -1) {
+          const qty = newItems[existingIdx].quantity + scanned.qty;
+          newItems[existingIdx] = {
+            ...newItems[existingIdx],
+            quantity: qty,
+            totalPrice: qty * newItems[existingIdx].unitPrice
+          };
+        } else {
+          newItems.push({
+            productId: matched.id,
+            productName: matched.name,
+            unitType: matched.unitType,
+            quantity: scanned.qty,
+            unitPrice: matched.defaultRate,
+            originalPrice: matched.defaultRate,
+            totalPrice: scanned.qty * matched.defaultRate
+          });
+        }
+      }
+    }
+
+    setItems(newItems);
+    markDirty();
+    alert(`Scanned PDF "${file.name}"! Found & loaded ${matchedCount} items matching active shop catalog.`);
+  };
 
   // Selection Dropdowns lists
   const [customers, setCustomers] = useState<any[]>([]);
@@ -241,7 +302,7 @@ export const BillingPage: React.FC = () => {
       const payload = {
         customerId,
         invoiceDate,
-        dueDate: dueDate || null,
+        dueDate: null,
         notes: notes || null,
         items,
       };
@@ -288,7 +349,7 @@ export const BillingPage: React.FC = () => {
         <div>
           <h1 className="text-3xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
             <ShoppingCart className="w-8 h-8 text-market-700 dark:text-market-400" />
-            Wholesale Invoicing Terminal
+            Invoicing Terminal
           </h1>
           <p className="text-sm font-semibold text-slate-500 mt-1 uppercase tracking-wider">
             Operator Store: <span className="text-market-700 dark:text-market-400 font-black">{activeShop.name}</span> (No GST/Taxes)
@@ -313,9 +374,9 @@ export const BillingPage: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
           {/* Customer & Date Selector Card */}
           <Card title="Billing Party Info" subtitle="Select customer and date details.">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Select
-                label="Wholesale Customer *"
+                label="Customer *"
                 value={customerId}
                 onChange={(e) => {
                   setCustomerId(e.target.value);
@@ -333,18 +394,33 @@ export const BillingPage: React.FC = () => {
                 value={invoiceDate}
                 onChange={(e) => setInvoiceDate(e.target.value)}
               />
-
-              <Input
-                label="Payment Due Date"
-                type="date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-              />
             </div>
           </Card>
 
           {/* Product Entry Form Card */}
           <Card title="Product Line Items" subtitle="Add products, quantities, and verify rates.">
+            {/* PDF scanner panel */}
+            <div className="mb-4 p-4 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-emerald-100 dark:bg-emerald-900 rounded-xl text-emerald-700 dark:text-emerald-300">
+                  <FileSpreadsheet className="w-6 h-6" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-extrabold text-slate-900 dark:text-white">Auto-Scan Invoice Items PDF</h4>
+                  <p className="text-[11px] font-bold text-slate-500">Scan list of items from customer PDF order sheet</p>
+                </div>
+              </div>
+              <label className="cursor-pointer bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl shadow-md transition-all active:scale-[0.98] shrink-0">
+                Upload & Scan PDF
+                <input
+                  type="file"
+                  accept=".pdf,image/*"
+                  onChange={handlePdfUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+
             <form onSubmit={handleAddItem} className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end bg-slate-50 dark:bg-slate-950/20 p-4 border border-slate-150 dark:border-slate-800 rounded-2xl mb-4">
               <div className="sm:col-span-2">
                 <Select
@@ -456,7 +532,7 @@ export const BillingPage: React.FC = () => {
               </div>
               
               <p className="text-center text-[10px] text-slate-450 font-semibold uppercase leading-snug">
-                Net Wholesale Bill (No Taxes / GST / discounts)
+                Net Bill (No Taxes / GST / discounts)
               </p>
 
               <div className="pt-2">

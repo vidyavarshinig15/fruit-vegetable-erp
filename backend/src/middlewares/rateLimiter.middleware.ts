@@ -1,8 +1,10 @@
 import rateLimit from 'express-rate-limit';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export const apiRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200,
+  max: isProduction ? 200 : 100000,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -14,7 +16,7 @@ export const apiRateLimiter = rateLimit({
 
 export const authRateLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Strict limit for auth attempts
+  max: isProduction ? 10 : 100000, // Strict limit for auth attempts
   standardHeaders: true,
   legacyHeaders: false,
   message: {

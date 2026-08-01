@@ -42,16 +42,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { label: t('payments'), path: ROUTES.PAYMENTS, icon: CreditCard },
     { label: t('receipts'), path: ROUTES.RECEIPTS, icon: Receipt },
     { label: t('ledger'), path: ROUTES.LEDGER, icon: BookOpen },
-    { label: t('credit_control', 'Credit Control'), path: ROUTES.CREDIT_CONTROL, icon: ShieldAlert },
     { label: t('reports'), path: ROUTES.REPORTS, icon: BarChart3 },
-    { label: t('communication', 'Communication'), path: ROUTES.COMMUNICATION, icon: MessageSquare },
     { label: t('history'), path: ROUTES.HISTORY, icon: History },
     { label: t('pending'), path: ROUTES.PENDING, icon: Clock },
     { label: t('partial'), path: ROUTES.PARTIAL, icon: Percent },
     { label: t('cleared'), path: ROUTES.CLEARED, icon: CheckCircle2 },
     { label: t('backup'), path: ROUTES.BACKUP, icon: HardDriveDownload },
     { label: t('settings'), path: ROUTES.SETTINGS, icon: Settings },
-    { label: t('profile'), path: ROUTES.PROFILE, icon: UserCheck },
+    { label: t('navProfile'), path: ROUTES.PROFILE, icon: UserCheck },
   ];
 
   return (
