@@ -93,6 +93,23 @@ const SEED_USERS: UserRecord[] = [
     updatedAt: new Date().toISOString(),
     passwordHash: DEFAULT_PASSWORD_HASH,
   },
+  {
+    id: 'usr_demo_abc',
+    email: 'abc@gmail.com',
+    fullName: 'Demo ABC',
+    mobileNumber: '9000000000',
+    role: UserRole.VIEWER,
+    assignedShopIds: [
+      ShopId.RAJ_FRUITS_AND_VEGETABLES,
+    ],
+    status: 'active',
+    failedLoginAttempts: 0,
+    lockedUntil: null,
+    lastLoginAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    passwordHash: '$2a$12$rm.HMET82xQNi0FdoqmxD.DyXW7roD1miIhDNomBo5sZ9krU/U3JS',
+  },
 ];
 
 class UserRepository {
