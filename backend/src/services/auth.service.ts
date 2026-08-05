@@ -10,7 +10,9 @@ const tokenBlacklist = new Set<string>();
 
 export class AuthService {
   async login(dto: LoginDTO, ipAddress: string, userAgent: string): Promise<AuthResponseData> {
-    if (dto.email.toLowerCase().trim() !== 'vidyavarshini15@gmail.com') {
+    // Allow login for demo emails configured via `DEMO_ALLOWED_EMAILS` env (comma-separated)
+    const allowed = config.demoAllowedEmails || ['vidyavarshini15@gmail.com'];
+    if (!allowed.includes(dto.email.toLowerCase().trim())) {
       await activityRepository.create({
         userEmail: dto.email,
         action: 'FAILED_LOGIN',

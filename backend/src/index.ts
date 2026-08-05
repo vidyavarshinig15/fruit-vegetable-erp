@@ -14,15 +14,19 @@ import path from 'path';
 const app = express();
 
 app.use(helmet());
-const allowedOrigins = [
+const allowedOrigins = new Set<string>([
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:5001',
-  'http://127.0.0.1:5001'
-];
+  'http://127.0.0.1:5001',
+]);
+if (config.corsOrigin) {
+  // allow a single origin value from config (e.g. the Vercel frontend URL)
+  allowedOrigins.add(config.corsOrigin);
+}
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin) || config.env === 'development') {
+    if (!origin || allowedOrigins.has(origin) || config.env === 'development') {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
@@ -122,13 +126,20 @@ async function ensureSeedCustomers() {
     ];
 
     for (const c of customers) {
-      const rows = await db.query(`customers?id=eq.${c.id}`);
-      if (rows.length === 0) {
-        logger.info(`Seeding customer ${c.name} into database...`);
-        await db.query('customers', {
-          method: 'POST',
-          body: c
-        });
+      try {
+        const rows = await db.query(`customers?id=eq.${c.id}`);
+        if (rows.length === 0) {
+          logger.info(`Seeding customer ${c.name} into database...`);
+          await db.query('customers', {
+            method: 'POST',
+            body: c
+          });
+          logger.info(`Seeded customer ${c.name}`);
+        } else {
+          logger.debug(`Customer ${c.name} already exists, skipping seed.`);
+        }
+      } catch (e) {
+        logger.error(`Failed to seed customer ${c.name}:`, (e as any).message || e);
       }
     }
   } catch (error) {

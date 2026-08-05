@@ -24,4 +24,6 @@ export const config = {
     anonKey: process.env.SUPABASE_ANON_KEY || '',
     serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
   },
+  // Comma-separated list of demo emails allowed to authenticate in non-production demos
+  demoAllowedEmails: (process.env.DEMO_ALLOWED_EMAILS || 'vidyavarshini15@gmail.com').split(',').map((s) => s.trim().toLowerCase()),
 };
