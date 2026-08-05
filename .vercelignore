@@ -1,0 +1,5 @@
+backend/
+supabase/
+docs/
+tests/
+frontend/e2e/

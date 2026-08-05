@@ -40,6 +40,14 @@ app.use(extractShopContext);
 app.use(maintenanceModeMiddleware);
 app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
 
+app.get('/', (_req, res) => {
+  res.json({
+    status: 'ok',
+    system: 'RAJU VEGETABLES AND FRUITS Billing System API',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.get('/health', (_req, res) => {
   res.json({
     status: 'ok',
