@@ -71,7 +71,7 @@ export const DashboardPage: React.FC = () => {
       const q = query.toLowerCase().trim();
       const [custRes, invRes, prodRes] = await Promise.all([
         api.get('/customers'),
-        api.get('/billing/invoices'),
+        api.get('/invoices'),
         api.get('/products'),
       ]);
 
@@ -84,7 +84,8 @@ export const DashboardPage: React.FC = () => {
           (i: any) => i.invoiceNumber.toLowerCase().includes(q)
         ).slice(0, 3);
 
-        const matchingProducts = (prodRes.data.data || []).filter(
+        const prodList = prodRes.data.data?.products || prodRes.data.data || [];
+        const matchingProducts = prodList.filter(
           (p: any) => p.name.toLowerCase().includes(q) || (p.code && p.code.toLowerCase().includes(q))
         ).slice(0, 3);
 

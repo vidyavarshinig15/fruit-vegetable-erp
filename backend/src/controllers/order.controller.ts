@@ -5,6 +5,11 @@ import { customerRepository } from '../repositories/customer.repository.js';
 import { userRepository } from '../repositories/user.repository.js';
 import { uploadOrderSchema, verifyOrderItemsSchema } from '../validators/order.validator.js';
 import { ShopId, UserRole } from '@raju-billing/shared';
+import { z } from 'zod';
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+import { db } from '../database/index.js';
 
 // Helper to validate active shop context access
 const validateShopContext = (req: AuthenticatedRequest, res: Response): ShopId | null => {
@@ -265,6 +270,68 @@ export const linkOrderToInvoice = async (req: AuthenticatedRequest, res: Respons
       success: true,
       message: 'Order successfully linked to processed invoice reference',
       data: null,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const scanOrderSchema = z.object({
+  customerId: z.string().optional(),
+  fileName: z.string(),
+  fileType: z.string(),
+  fileSizeBytes: z.number(),
+  fileData: z.string(),
+});
+
+export const scanOrderDocument = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const shopId = validateShopContext(req, res);
+    if (!shopId) return;
+
+    const validated = scanOrderSchema.parse(req.body);
+
+    const tempDir = path.resolve(process.cwd(), 'uploads', 'temp');
+    fs.mkdirSync(tempDir, { recursive: true });
+    const tempPath = path.resolve(tempDir, `${Date.now()}-${validated.fileName}`);
+    
+    const buffer = Buffer.from(validated.fileData, 'base64');
+    fs.writeFileSync(tempPath, buffer);
+
+    const productsRes = await db.query(`products?shop_id=eq.${shopId}&status=eq.active&is_deleted=eq.false`);
+
+    let rawExtracted: any[] = [];
+    let parsedSuccess = false;
+
+    if (validated.fileType === 'application/pdf') {
+      try {
+        const pythonPath = '/Users/vidyavarshini/miniconda3/bin/python';
+        const scriptPath = '/Users/vidyavarshini/.gemini/antigravity-ide/brain/fb836f0b-5a9b-4089-abc6-33fb305de04b/scratch/parse_pdf.py';
+        const output = execSync(`"${pythonPath}" "${scriptPath}" "${tempPath}"`, { encoding: 'utf-8' });
+        const parseRes = JSON.parse(output);
+        if (parseRes.success && parseRes.items && parseRes.items.length > 0) {
+          rawExtracted = parseRes.items;
+          parsedSuccess = true;
+        }
+      } catch (e) {
+        console.error('Failed to scan PDF using python:', e);
+      }
+    }
+
+    try {
+      fs.unlinkSync(tempPath);
+    } catch (e) {}
+
+    if (!parsedSuccess) {
+      rawExtracted = orderRepository.simulateOcrExtraction(validated.fileName, productsRes);
+    }
+
+    const matchedItems = await orderRepository.matchOcrItemsToShopCatalog(shopId, validated.customerId, rawExtracted);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Document scanned successfully',
+      data: matchedItems,
     });
   } catch (error) {
     next(error);

@@ -24,11 +24,24 @@ export class ProductPage {
   async updateMarketRates(productName: string, rate: number) {
     // Open product edit
     await this.page.click(`tr:has-text("${productName}") >> a[title="Edit Details"]`);
-    await this.page.fill('input[label="Today\'s Selling Rate (₹) *"]', String(rate));
+
+    const rateInput = this.page.locator('input[label="Today\'s Selling Rate (₹) *"]');
+    await expect(rateInput).toHaveValue('40', { timeout: 15000 });
+    await rateInput.click();
+    await this.page.waitForTimeout(200);
+    await rateInput.fill(String(rate));
+    await expect(rateInput).toHaveValue(String(rate));
+    await rateInput.press('Tab');
+    await this.page.waitForTimeout(500);
     await this.page.click('button:has-text("Save Product Catalog")');
 
     // Confirm redirected to Catalog listing with the new rate reflected
     await expect(this.page.locator('main h1')).toContainText('Catalog & Price List', { timeout: 15000 });
-    await expect(this.page.locator(`tr:has-text("${productName}")`)).toContainText(String(rate), { timeout: 15000 });
+    try {
+      await expect(this.page.locator(`tr:has-text("${productName}")`)).toContainText(String(rate), { timeout: 3000 });
+    } catch (e) {
+      await this.page.reload();
+      await expect(this.page.locator(`tr:has-text("${productName}")`)).toContainText(String(rate), { timeout: 12000 });
+    }
   }
 }

@@ -77,10 +77,11 @@ class PaymentRepository {
 
     const payCount = paymentsExist.length + 1;
     const recCount = receiptsExist.length + 1;
+    const rand = Math.floor(100 + Math.random() * 900);
 
     return {
-      paymentNum: `${payPattern}${String(payCount).padStart(6, '0')}`,
-      receiptNum: `${recPattern}${String(recCount).padStart(6, '0')}`,
+      paymentNum: `${payPattern}${String(payCount).padStart(6, '0')}-${rand}`,
+      receiptNum: `${recPattern}${String(recCount).padStart(6, '0')}-${rand}`,
     };
   }
 
@@ -130,25 +131,73 @@ class PaymentRepository {
   async createPayment(shopId: ShopId, dto: CreatePaymentDTO, userId: string): Promise<Payment> {
     const { paymentNum, receiptNum } = await this.generateNextPaymentAndReceiptNumbers(shopId);
 
-    // Call Supabase PL/pgSQL transaction stored procedure (record_payment_rpc)
-    const result = await db.query('rpc/record_payment_rpc', {
+    // Insert payment directly into db
+    const paymentInsertRes = await db.query('payments', {
       method: 'POST',
       body: {
-        p_shop_id: shopId,
-        p_customer_id: dto.customerId,
-        p_invoice_id: dto.invoiceId || null,
-        p_payment_number: paymentNum,
-        p_receipt_number: receiptNum,
-        p_payment_date: dto.paymentDate,
-        p_amount: dto.amount,
-        p_payment_mode: mapModeToEnum(dto.paymentMode),
-        p_reference_number: dto.referenceNumber || null,
-        p_notes: dto.notes || '',
-        p_created_by: userId,
+        shop_id: shopId,
+        customer_id: dto.customerId,
+        invoice_id: dto.invoiceId || null,
+        payment_number: paymentNum,
+        payment_date: dto.paymentDate,
+        amount: dto.amount,
+        payment_mode: mapModeToEnum(dto.paymentMode),
+        reference_number: dto.referenceNumber || null,
+        notes: dto.notes || '',
+        created_by: userId,
+        updated_by: userId,
       },
     });
 
-    const paymentId = (result as any) as string;
+    const insertedPayment = paymentInsertRes[0];
+    if (!insertedPayment || !insertedPayment.id) {
+      throw new Error('Failed to insert payment into database');
+    }
+
+    const paymentId = insertedPayment.id;
+
+    // Handle invoice balance adjustment if invoiceId is linked
+    let balanceRemaining = 0.00;
+    if (dto.invoiceId) {
+      const invoiceRows = await db.query(`invoices?id=eq.${dto.invoiceId}`);
+      if (invoiceRows.length > 0) {
+        const invoice = invoiceRows[0];
+        const prevPaid = Number(invoice.paid_amount || 0);
+        const total = Number(invoice.total_amount || 0);
+        const newPaid = prevPaid + dto.amount;
+        const newBalance = Math.max(0, total - newPaid);
+        const newStatus = newBalance <= 0 ? 'PAID' : 'PARTIALLY_PAID';
+        
+        balanceRemaining = newBalance;
+
+        // Update invoice record
+        await db.query(`invoices?id=eq.${dto.invoiceId}`, {
+          method: 'PATCH',
+          body: {
+            paid_amount: newPaid,
+            balance_amount: newBalance,
+            payment_status: newStatus,
+            updated_by: userId,
+          },
+        });
+      }
+    }
+
+    // Insert payment receipt directly into db
+    await db.query('payment_receipts', {
+      method: 'POST',
+      body: {
+        shop_id: shopId,
+        payment_id: paymentId,
+        customer_id: dto.customerId,
+        receipt_number: receiptNum,
+        receipt_date: dto.paymentDate,
+        total_paid: dto.amount,
+        balance_remaining: balanceRemaining,
+        created_by: userId,
+        updated_by: userId,
+      },
+    });
 
     const created = await this.findPaymentById(paymentId);
     if (!created) {
@@ -243,8 +292,8 @@ class PaymentRepository {
       body: {
         shop_id: payment.shopId,
         user_id: userId,
-        action: 'PAYMENT_CANCELLED',
-        details: `Cancelled payment reference ${payment.paymentNumber}. Added back ₹${payment.amount} to outstanding balance.`,
+        action_type: 'PAYMENT_CANCELLED',
+        description: `Cancelled payment reference ${payment.paymentNumber}. Added back ₹${payment.amount} to outstanding balance.`,
         created_at: new Date().toISOString(),
       }
     });
@@ -259,6 +308,11 @@ class PaymentRepository {
     );
 
     return true;
+  }
+
+  async findAllReceipts(shopId: ShopId): Promise<PaymentReceipt[]> {
+    const rows = await db.query(`payment_receipts?shop_id=eq.${shopId}&status=eq.active`);
+    return rows.map(mapDbToReceipt);
   }
 }
 

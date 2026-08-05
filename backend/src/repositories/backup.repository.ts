@@ -196,8 +196,8 @@ class BackupRepository {
         body: {
           shop_id: shopId,
           user_id: userId,
-          action: 'RESTORE_COMPLETED',
-          details: `Completed database restoration verification check. Restored ${payload.invoices.length} invoices and ${payload.payments.length} payments.`,
+          action_type: 'RESTORE_COMPLETED',
+          description: `Completed database restoration verification check. Restored ${payload.invoices.length} invoices and ${payload.payments.length} payments.`,
           created_at: new Date().toISOString(),
         }
       }).catch(() => {});

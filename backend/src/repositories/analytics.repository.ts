@@ -23,7 +23,7 @@ class AnalyticsRepository {
     const invoices = await db.query('invoices?is_deleted=eq.false');
     const payments = await db.query('payments?is_deleted=eq.false');
     const customers = await db.query('customers?is_deleted=eq.false');
-    const orders = await db.query('inbound_orders?is_deleted=eq.false').catch(() => []);
+    const orders = await db.query('customer_uploaded_orders?is_deleted=eq.false').catch(() => []);
 
     const filterShop = <T>(list: T[], key: keyof T = 'shop_id' as any): T[] => {
       if (!shopId) return list;

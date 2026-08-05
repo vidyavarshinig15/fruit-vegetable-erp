@@ -195,8 +195,8 @@ export const getReportData = async (req: AuthenticatedRequest, res: Response, ne
         body: {
           shop_id: activeShopId || null,
           user_id: req.user?.id || null,
-          action: 'REPORT_EXPORTED',
-          details: `Exported ${filters.type.toUpperCase()} report in ${exportFormat} format. Filter: ${startDate || 'All'} to ${endDate || 'All'}.`,
+          action_type: 'REPORT_EXPORTED',
+          description: `Exported ${filters.type.toUpperCase()} report in ${exportFormat} format. Filter: ${startDate || 'All'} to ${endDate || 'All'}.`,
           created_at: new Date().toISOString(),
         }
       });

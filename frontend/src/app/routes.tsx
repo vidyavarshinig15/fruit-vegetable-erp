@@ -39,6 +39,17 @@ import { HistoryPage } from '@/pages/billing/HistoryPage';
 import { PendingPage } from '@/pages/billing/PendingPage';
 import { PartialPage } from '@/pages/billing/PartialPage';
 import { ClearedPage } from '@/pages/billing/ClearedPage';
+import { useAuth } from '@/contexts/AuthContext';
+
+const OwnerRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+  
+  if (!user || user.email !== 'vidyavarshini15@gmail.com') {
+    return <Navigate to="/profile" replace />;
+  }
+  
+  return <>{children}</>;
+};
 
 export const AppRoutes: React.FC = () => {
   return (
@@ -55,9 +66,9 @@ export const AppRoutes: React.FC = () => {
       <Route element={<MainLayout />}>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="/users" element={<UserManagementPage />} />
-        <Route path="/roles" element={<RolePermissionPage />} />
-        <Route path="/activity" element={<ActivityLogPage />} />
+        <Route path="/users" element={<OwnerRoute><UserManagementPage /></OwnerRoute>} />
+        <Route path="/roles" element={<OwnerRoute><RolePermissionPage /></OwnerRoute>} />
+        <Route path="/activity" element={<OwnerRoute><ActivityLogPage /></OwnerRoute>} />
         <Route path="/profile" element={<ProfilePage />} />
         
         {/* Customer Management Routes */}
@@ -92,8 +103,8 @@ export const AppRoutes: React.FC = () => {
         <Route path="/ledger" element={<LedgerPage />} />
         <Route path="/ledger/statement" element={<CustomerStatementPage />} />
         <Route path="/reports" element={<ReportsPage />} />
-        <Route path="/backup" element={<BackupPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/backup" element={<OwnerRoute><BackupPage /></OwnerRoute>} />
+        <Route path="/settings" element={<OwnerRoute><SettingsPage /></OwnerRoute>} />
       </Route>
 
       {/* 404 Fallback */}

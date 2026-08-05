@@ -51,7 +51,7 @@ export const PaymentsPage: React.FC = () => {
   // Fetch Invoices list for number mapping
   const fetchInvoices = useCallback(async () => {
     try {
-      const res = await api.get('/billing/invoices');
+      const res = await api.get('/invoices');
       if (res.data?.success) {
         setInvoices(res.data.data || []);
       }

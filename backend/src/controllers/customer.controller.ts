@@ -63,7 +63,7 @@ export const getCustomers = async (req: AuthenticatedRequest, res: Response, nex
       area: typeof area === 'string' ? area : undefined,
       outstandingOnly: outstandingOnly === 'true',
       page: page ? parseInt(page as string, 10) : 1,
-      limit: limit ? parseInt(limit as string, 10) : 50,
+      limit: limit ? parseInt(limit as string, 10) : 10000,
     };
 
     const result = await customerRepository.findAll(shopId, filters);

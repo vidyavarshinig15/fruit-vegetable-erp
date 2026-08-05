@@ -324,34 +324,49 @@ export const ReportsPage: React.FC = () => {
               <tbody>
                 {reportData.map((row, idx) => {
                   if (reportType === 'sales') {
+                    const invNo = row.invoiceNumber || row.invoice_number || '';
+                    const invDate = row.invoiceDate || row.invoice_date || '';
+                    const custId = row.customerId || row.customer_id || '';
+                    const payStatus = row.paymentStatus || row.payment_status || '';
+                    const totalAmt = row.totalAmount !== undefined ? row.totalAmount : (row.total_amount || 0);
+                    const paidAmt = row.paidAmount !== undefined ? row.paidAmount : (row.paid_amount || 0);
+                    const balAmt = row.balanceAmount !== undefined ? row.balanceAmount : (row.balance_amount || 0);
+
                     return (
                       <tr key={idx} className="border-b border-slate-200">
-                        <td className="py-2.5 px-3 uppercase font-black">{row.invoiceNumber}</td>
-                        <td className="py-2.5 px-3">{new Date(row.invoiceDate).toLocaleDateString()}</td>
-                        <td className="py-2.5 px-3 uppercase">{customers.find((c) => c.id === row.customerId)?.name || 'Loading customer...'}</td>
+                        <td className="py-2.5 px-3 uppercase font-black">{invNo}</td>
+                        <td className="py-2.5 px-3">{new Date(invDate).toLocaleDateString()}</td>
+                        <td className="py-2.5 px-3 uppercase">{customers.find((c) => c.id === custId)?.name || 'Loading customer...'}</td>
                         <td className="py-2.5 px-3">
-                          <Badge variant={row.paymentStatus === 'PAID' ? 'success' : row.paymentStatus === 'PARTIALLY_PAID' ? 'warning' : 'danger'}>
-                            {row.paymentStatus}
+                          <Badge variant={payStatus === 'PAID' ? 'success' : payStatus === 'PARTIALLY_PAID' ? 'warning' : 'danger'}>
+                            {payStatus}
                           </Badge>
                         </td>
-                        <td className="py-2.5 px-3 text-right font-bold">{formatCurrency(row.totalAmount).replace('₹', '')}</td>
-                        <td className="py-2.5 px-3 text-right font-bold text-emerald-600">{formatCurrency(row.paidAmount).replace('₹', '')}</td>
-                        <td className="py-2.5 px-3 text-right font-black text-red-650">{formatCurrency(row.balanceAmount).replace('₹', '')}</td>
+                        <td className="py-2.5 px-3 text-right font-bold">{formatCurrency(totalAmt).replace('₹', '')}</td>
+                        <td className="py-2.5 px-3 text-right font-bold text-emerald-600">{formatCurrency(paidAmt).replace('₹', '')}</td>
+                        <td className="py-2.5 px-3 text-right font-black text-red-650">{formatCurrency(balAmt).replace('₹', '')}</td>
                       </tr>
                     );
                   }
 
                   if (reportType === 'payment') {
+                    const payNo = row.paymentNumber || row.payment_number || '';
+                    const payDate = row.paymentDate || row.payment_date || '';
+                    const custId = row.customerId || row.customer_id || '';
+                    const payMode = row.paymentMode || row.payment_mode || '';
+                    const refNo = row.referenceNumber || row.reference_number || '';
+                    const amt = row.amount !== undefined ? row.amount : (row.amount || 0);
+
                     return (
                       <tr key={idx} className="border-b border-slate-200">
-                        <td className="py-2.5 px-3 uppercase font-black">{row.paymentNumber}</td>
-                        <td className="py-2.5 px-3">{new Date(row.paymentDate).toLocaleDateString()}</td>
-                        <td className="py-2.5 px-3 uppercase">{customers.find((c) => c.id === row.customerId)?.name || 'Loading customer...'}</td>
+                        <td className="py-2.5 px-3 uppercase font-black">{payNo}</td>
+                        <td className="py-2.5 px-3">{new Date(payDate).toLocaleDateString()}</td>
+                        <td className="py-2.5 px-3 uppercase">{customers.find((c) => c.id === custId)?.name || 'Loading customer...'}</td>
                         <td className="py-2.5 px-3">
-                          <Badge variant="info">{row.paymentMode}</Badge>
+                          <Badge variant="info">{payMode}</Badge>
                         </td>
-                        <td className="py-2.5 px-3 text-slate-500 uppercase text-[9px] font-bold">{row.referenceNumber || 'N/A'}</td>
-                        <td className="py-2.5 px-3 text-right font-black">{formatCurrency(row.amount).replace('₹', '')}</td>
+                        <td className="py-2.5 px-3 text-slate-500 uppercase text-[9px] font-bold">{refNo || 'N/A'}</td>
+                        <td className="py-2.5 px-3 text-right font-black">{formatCurrency(amt).replace('₹', '')}</td>
                       </tr>
                     );
                   }

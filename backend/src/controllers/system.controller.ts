@@ -76,8 +76,8 @@ export const getActivityLogs = async (req: AuthenticatedRequest, res: Response, 
       id: r.id,
       shopId: r.shop_id,
       userId: r.user_id,
-      action: r.action,
-      details: r.details,
+      action: r.action_type || r.action,
+      details: r.description || r.details,
       metadata: r.metadata || {},
       createdAt: r.created_at,
     }));
@@ -139,8 +139,8 @@ export const createBackup = async (req: AuthenticatedRequest, res: Response, nex
       body: {
         shop_id: shopId,
         user_id: req.user?.id,
-        action: 'BACKUP_CREATED',
-        details: `Created database manual backup log. Size: ${log.sizeBytes} bytes.`,
+        action_type: 'BACKUP_CREATED',
+        description: `Created database manual backup log. Size: ${log.sizeBytes} bytes.`,
         created_at: new Date().toISOString(),
       }
     }).catch(() => {});
@@ -240,8 +240,8 @@ export const updateUserManage = async (req: AuthenticatedRequest, res: Response,
         body: {
           shop_id: shopId,
           user_id: req.user?.id,
-          action: 'USER_UPDATED',
-          details: `Modified user ${user.fullName} access status to ${status} and role to ${role}.`,
+          action_type: 'USER_UPDATED',
+          description: `Modified user ${user.fullName} access status to ${status} and role to ${role}.`,
           created_at: new Date().toISOString(),
         }
       }).catch(() => {});
@@ -304,8 +304,8 @@ export const toggleMaintenanceMode = async (req: AuthenticatedRequest, res: Resp
       body: {
         shop_id: shopId,
         user_id: req.user?.id,
-        action: 'SETTINGS_CHANGED',
-        details: `Maintenance Mode toggled to ${enabled ? 'ENABLED' : 'DISABLED'}.`,
+        action_type: 'SETTINGS_CHANGED',
+        description: `Maintenance Mode toggled to ${enabled ? 'ENABLED' : 'DISABLED'}.`,
         created_at: new Date().toISOString(),
       }
     }).catch(() => {});

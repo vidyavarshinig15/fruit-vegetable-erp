@@ -75,7 +75,7 @@ export const PaymentFormPage: React.FC = () => {
       }
 
       // Find unpaid/partially paid invoices of this customer
-      const invRes = await api.get('/billing/invoices');
+      const invRes = await api.get('/invoices');
       if (invRes.data?.success) {
         const list = (invRes.data.data || []).filter(
           (i: any) =>
@@ -107,7 +107,6 @@ export const PaymentFormPage: React.FC = () => {
       }
     } else {
       setSelectedInvoice(null);
-      if (!initialInvoiceId) setAmount(0);
     }
   }, [invoiceId, invoices, initialInvoiceId]);
 
@@ -163,7 +162,6 @@ export const PaymentFormPage: React.FC = () => {
 
       const res = await api.post('/payments', payload);
       if (res.data?.success && res.data?.data) {
-        alert('Payment successfully confirmed!');
         navigate(`/payments/${res.data.data.id}`);
       }
     } catch (err: any) {
@@ -224,7 +222,7 @@ export const PaymentFormPage: React.FC = () => {
               
               <div className="flex justify-between text-sm font-semibold text-slate-600">
                 <span>{invoiceId ? 'Invoice Total Amount' : 'Customer Dues Balance'}</span>
-                <span>{invoiceId ? formatCurrency(selectedInvoice?.totalAmount) : formatCurrency(selectedCustomer?.current_balance)}</span>
+                <span>{invoiceId ? formatCurrency(selectedInvoice?.totalAmount) : formatCurrency(selectedCustomer?.currentOutstanding ?? selectedCustomer?.current_balance ?? 0)}</span>
               </div>
 
               {invoiceId && (
@@ -244,7 +242,7 @@ export const PaymentFormPage: React.FC = () => {
                 <span>
                   {invoiceId
                     ? formatCurrency(selectedInvoice?.balanceAmount - amount)
-                    : formatCurrency(selectedCustomer?.current_balance - amount)}
+                    : formatCurrency((selectedCustomer?.currentOutstanding ?? selectedCustomer?.current_balance ?? 0) - amount)}
                 </span>
               </div>
             </div>
@@ -290,7 +288,7 @@ export const PaymentFormPage: React.FC = () => {
                 <div className="p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl border border-slate-150 dark:border-slate-800 font-semibold text-xs text-slate-550 flex flex-col justify-center">
                   <span className="block uppercase text-[9px] font-black tracking-wider text-slate-400">Current Outstanding Dues</span>
                   <span className="text-lg font-black text-slate-900 dark:text-white mt-1">
-                    {formatCurrency(selectedCustomer.current_balance)}
+                    {formatCurrency(selectedCustomer.currentOutstanding ?? selectedCustomer.current_balance ?? 0)}
                   </span>
                 </div>
               )}

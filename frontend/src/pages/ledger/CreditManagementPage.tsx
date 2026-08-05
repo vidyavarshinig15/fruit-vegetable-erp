@@ -134,8 +134,10 @@ export const CreditManagementPage: React.FC = () => {
                 </thead>
                 <tbody>
                   {filteredCustomers.map((cust) => {
-                    const outstanding = cust.current_balance > 0 ? cust.current_balance : 0;
-                    const creditHold = outstanding > cust.credit_limit && cust.credit_limit > 0;
+                    const balance = cust.currentOutstanding ?? cust.current_balance ?? 0;
+                    const limit = cust.creditLimit ?? cust.credit_limit ?? 0;
+                    const outstanding = balance > 0 ? balance : 0;
+                    const creditHold = outstanding > limit && limit > 0;
 
                     return (
                       <tr key={cust.id} className="border-b border-slate-100 dark:border-slate-850 hover:bg-slate-50/30">
@@ -143,16 +145,16 @@ export const CreditManagementPage: React.FC = () => {
                           <span className="block font-black text-slate-900 dark:text-white uppercase">{cust.name}</span>
                           <span className="block text-[10px] text-slate-400 mt-0.5">{cust.customerCode}</span>
                         </td>
-                        <td className={`py-3 px-3 text-right font-extrabold ${cust.current_balance > 0 ? 'text-red-650' : 'text-emerald-650'}`}>
-                          {formatCurrency(cust.current_balance).replace('₹', '')}
+                        <td className={`py-3 px-3 text-right font-extrabold ${balance > 0 ? 'text-red-650' : 'text-emerald-650'}`}>
+                          {formatCurrency(balance).replace('₹', '')}
                         </td>
                         <td className="py-3 px-3 text-right font-bold text-slate-500">
-                          {cust.credit_limit > 0 ? formatCurrency(cust.credit_limit).replace('₹', '') : 'No Limit'}
+                          {limit > 0 ? formatCurrency(limit).replace('₹', '') : 'No Limit'}
                         </td>
                         <td className="py-3 px-3 text-center">
                           {creditHold ? (
                             <Badge variant="danger">Credit Hold</Badge>
-                          ) : cust.current_balance < 0 ? (
+                          ) : balance < 0 ? (
                             <Badge variant="success">Advance Credit</Badge>
                           ) : (
                             <Badge variant="neutral">Normal</Badge>

@@ -14,6 +14,7 @@ test.describe('Fruits & Vegetables ERP Production Suite', () => {
   let productCode = 'TOM';
 
   test.beforeEach(async ({ page }) => {
+    page.on('dialog', (dialog) => dialog.accept().catch(() => {}));
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     // Default admin seed credentials
@@ -52,14 +53,18 @@ test.describe('Fruits & Vegetables ERP Production Suite', () => {
     ]);
 
     // 5. Confirm Invoice Generated Success Screen
-    await expect(page.locator('text=TAX INVOICE')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('h3:has-text("TAX INVOICE")')).toBeVisible({ timeout: 15000 });
 
     // 6. Collect Payment Collection & Receipts
     await page.click('nav >> text=Payments');
     await page.click('button:has-text("Record Collection")');
-    const buyerOpt = page.locator('select[label="Buyer Customer *"] option', { hasText: customerName });
-    await page.selectOption('select[label="Buyer Customer *"]', await buyerOpt.getAttribute('value') || '');
-    await page.fill('input[label="Received Payment Amount (₹) *"]', '450');
+    const opt1 = page.locator(`select[label="Buyer Customer *"] option:has-text("${customerName}")`);
+    await opt1.waitFor({ state: 'attached' });
+    await page.selectOption('select[label="Buyer Customer *"]', await opt1.getAttribute('value') || '');
+    const amtInput1 = page.locator('input[label="Received Payment Amount (₹) *"]');
+    await amtInput1.fill('450');
+    await amtInput1.press('Tab');
+    await page.waitForTimeout(300);
     await page.selectOption('select[label="Payment Mode *"]', 'CASH');
     await page.click('button:has-text("Verify & Proceed")');
     await page.click('button:has-text("Confirm & Generate Receipt")');
@@ -69,6 +74,9 @@ test.describe('Fruits & Vegetables ERP Production Suite', () => {
 
     // 7. Check Ledger Account Timeline balance
     await page.click('nav >> text=Ledger');
+    const optLedger1 = page.locator(`select[label="Wholesale Buyer Customer *"] option:has-text("${customerName}")`);
+    await optLedger1.waitFor({ state: 'attached' });
+    await page.selectOption('select[label="Wholesale Buyer Customer *"]', await optLedger1.getAttribute('value') || '');
     await expect(page.locator('tr:has-text("INVOICE")')).toBeVisible();
     await expect(page.locator('tr:has-text("PAYMENT")')).toBeVisible();
   });
@@ -81,14 +89,18 @@ test.describe('Fruits & Vegetables ERP Production Suite', () => {
     await billingPage.createInvoice(customerName, [
       { name: productName, qty: 20, rate: 50 }, // Total: ₹1000
     ]);
-    await expect(page.locator('text=TAX INVOICE')).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('h3:has-text("TAX INVOICE")')).toBeVisible({ timeout: 15000 });
 
     // 2. Record First Partial Payment
     await page.click('nav >> text=Payments');
     await page.click('button:has-text("Record Collection")');
-    const buyerOpt1 = page.locator('select[label="Buyer Customer *"] option', { hasText: customerName });
-    await page.selectOption('select[label="Buyer Customer *"]', await buyerOpt1.getAttribute('value') || '');
-    await page.fill('input[label="Received Payment Amount (₹) *"]', '400');
+    const opt2a = page.locator(`select[label="Buyer Customer *"] option:has-text("${customerName}")`);
+    await opt2a.waitFor({ state: 'attached' });
+    await page.selectOption('select[label="Buyer Customer *"]', await opt2a.getAttribute('value') || '');
+    const amtInput2a = page.locator('input[label="Received Payment Amount (₹) *"]');
+    await amtInput2a.fill('400');
+    await amtInput2a.press('Tab');
+    await page.waitForTimeout(300);
     await page.click('button:has-text("Verify & Proceed")');
     await page.click('button:has-text("Confirm & Generate Receipt")');
     await expect(page.locator('main h1')).toContainText('Payment Receipt details');
@@ -96,33 +108,47 @@ test.describe('Fruits & Vegetables ERP Production Suite', () => {
     // 3. Record Second Payment
     await page.click('nav >> text=Payments');
     await page.click('button:has-text("Record Collection")');
-    const buyerOpt2 = page.locator('select[label="Buyer Customer *"] option', { hasText: customerName });
-    await page.selectOption('select[label="Buyer Customer *"]', await buyerOpt2.getAttribute('value') || '');
-    await page.fill('input[label="Received Payment Amount (₹) *"]', '600');
+    const opt2b = page.locator(`select[label="Buyer Customer *"] option:has-text("${customerName}")`);
+    await opt2b.waitFor({ state: 'attached' });
+    await page.selectOption('select[label="Buyer Customer *"]', await opt2b.getAttribute('value') || '');
+    const amtInput2b = page.locator('input[label="Received Payment Amount (₹) *"]');
+    await amtInput2b.fill('600');
+    await amtInput2b.press('Tab');
+    await page.waitForTimeout(300);
     await page.click('button:has-text("Verify & Proceed")');
     await page.click('button:has-text("Confirm & Generate Receipt")');
     await expect(page.locator('main h1')).toContainText('Payment Receipt details');
 
     // 4. View printable account statement
     await page.click('nav >> text=Ledger');
-    await page.click('button:has-text("Print Statement")');
-    await expect(page.locator('text=STATEMENT REPORT')).toBeVisible();
+    const optLedger2 = page.locator(`select[label="Wholesale Buyer Customer *"] option:has-text("${customerName}")`);
+    await optLedger2.waitFor({ state: 'attached' });
+    await page.selectOption('select[label="Wholesale Buyer Customer *"]', await optLedger2.getAttribute('value') || '');
+    await page.click('button:has-text("Printable Statement")');
+    await expect(page.locator('h3:has-text("ACCOUNT STATEMENT")')).toBeVisible();
   });
 
   test('Workflow 3: Advance Settlement credits and adjustment debits', async ({ page }) => {
     // 1. Record Advance collection
     await page.click('nav >> text=Payments');
     await page.click('button:has-text("Record Collection")');
-    const buyerOpt3 = page.locator('select[label="Buyer Customer *"] option', { hasText: customerName });
-    await page.selectOption('select[label="Buyer Customer *"]', await buyerOpt3.getAttribute('value') || '');
-    await page.fill('input[label="Received Payment Amount (₹) *"]', '500'); // Advance
+    const opt3 = page.locator(`select[label="Buyer Customer *"] option:has-text("${customerName}")`);
+    await opt3.waitFor({ state: 'attached' });
+    await page.selectOption('select[label="Buyer Customer *"]', await opt3.getAttribute('value') || '');
+    const amtInput3 = page.locator('input[label="Received Payment Amount (₹) *"]');
+    await amtInput3.fill('500');
+    await amtInput3.press('Tab');
+    await page.waitForTimeout(300);
     await page.click('button:has-text("Verify & Proceed")');
     await page.click('button:has-text("Confirm & Generate Receipt")');
     await expect(page.locator('main h1')).toContainText('Payment Receipt details');
 
     // 2. Apply Ledger balance credit check
     await page.click('nav >> text=Ledger');
-    await expect(page.locator('text=Advance balance')).toBeVisible();
+    const optLedger3 = page.locator(`select[label="Wholesale Buyer Customer *"] option:has-text("${customerName}")`);
+    await optLedger3.waitFor({ state: 'attached' });
+    await page.selectOption('select[label="Wholesale Buyer Customer *"]', await optLedger3.getAttribute('value') || '');
+    await expect(page.locator('text=Advance Credit')).toBeVisible();
   });
 
   test('Verify Dashboard widgets & Shop isolation locks', async ({ page }) => {

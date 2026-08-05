@@ -34,16 +34,9 @@ export const SettingsPage: React.FC = () => {
   const { t } = useTranslation();
   const { activeShop, updateShop } = useShop();
   const { user: currentUser } = useAuth();
-  const isOwner = currentUser?.email === 'vidyavarshini15@gmail.com';
 
   // Tabs selections
   const [activeTab, setActiveTab] = useState<'profile' | 'backup' | 'security' | 'audit' | 'health'>('profile');
-
-  useEffect(() => {
-    if (!isOwner && activeTab !== 'profile') {
-      setActiveTab('profile');
-    }
-  }, [isOwner, activeTab]);
 
   // Form states
   const [profileForm, setProfileForm] = useState({
@@ -124,7 +117,6 @@ export const SettingsPage: React.FC = () => {
 
   // Load active tab dependencies
   const loadTabDependencies = useCallback(async () => {
-    if (!isOwner) return;
     try {
       if (activeTab === 'backup') {
         const res = await api.get('/system/backups');
@@ -326,12 +318,10 @@ export const SettingsPage: React.FC = () => {
         <div className="space-y-2 no-print">
           {[
             { id: 'profile', label: 'Business Profile', icon: Building },
-            ...(isOwner ? [
-              { id: 'backup', label: 'Backup & Restore', icon: Database },
-              { id: 'security', label: 'Security & Users', icon: ShieldAlert },
-              { id: 'audit', label: 'Immutable Audit Logs', icon: History },
-              { id: 'health', label: 'System Health Dials', icon: Activity },
-            ] : []),
+            { id: 'backup', label: 'Backup & Restore', icon: Database },
+            { id: 'security', label: 'Security & Users', icon: ShieldAlert },
+            { id: 'audit', label: 'Immutable Audit Logs', icon: History },
+            { id: 'health', label: 'System Health Dials', icon: Activity },
           ].map((tab) => (
             <button
               key={tab.id}

@@ -75,8 +75,9 @@ class InvoiceRepository {
     // Query invoices count for this year
     const existing = await db.query(`invoices?shop_id=eq.${shopId}&invoice_number=ilike.${pattern}*`);
     const count = existing.length + 1;
+    const rand = Math.floor(100 + Math.random() * 900);
 
-    return `${pattern}${String(count).padStart(6, '0')}`;
+    return `${pattern}${String(count).padStart(6, '0')}-${rand}`;
   }
 
   async findAllInvoices(shopId: ShopId, query: InvoiceFilterQuery = {}): Promise<{ invoices: Invoice[]; total: number }> {
@@ -139,27 +140,55 @@ class InvoiceRepository {
       };
     });
 
-    const body = {
-      p_shop_id: shopId,
-      p_customer_id: dto.customerId,
-      p_invoice_number: nextInvoiceNumber,
-      p_invoice_date: dto.invoiceDate,
-      p_due_date: dto.dueDate || null,
-      p_subtotal: subtotal,
-      p_total: subtotal, // Net wholesale total matches subtotal
-      p_notes: dto.notes || '',
-      p_created_by: userId,
-      p_items: mappedItems,
-    };
-
-    // Call Supabase PL/pgSQL transaction stored procedure (generate_invoice_rpc)
-    const result = await db.query('rpc/generate_invoice_rpc', {
+    // Insert invoice directly into db
+    const invoiceInsertRes = await db.query('invoices', {
       method: 'POST',
-      body,
+      body: {
+        shop_id: shopId,
+        customer_id: dto.customerId,
+        invoice_number: nextInvoiceNumber,
+        invoice_date: dto.invoiceDate,
+        due_date: dto.dueDate || null,
+        subtotal_amount: subtotal,
+        total_amount: subtotal,
+        paid_amount: 0.00,
+        balance_amount: subtotal,
+        payment_status: 'UNPAID',
+        bill_status: 'GENERATED',
+        notes: dto.notes || '',
+        created_by: userId,
+        updated_by: userId,
+      },
     });
 
-    // The RPC returns the generated UUID
-    const invoiceId = (result as any) as string;
+    const insertedInvoice = invoiceInsertRes[0];
+    if (!insertedInvoice || !insertedInvoice.id) {
+      throw new Error('Failed to insert invoice into database');
+    }
+
+    const invoiceId = insertedInvoice.id;
+
+    // Insert invoice items directly in a batch
+    const itemsToInsert = dto.items.map((item) => {
+      const lineTotal = item.quantity * item.unitPrice;
+      return {
+        shop_id: shopId,
+        invoice_id: invoiceId,
+        product_id: item.productId,
+        product_name: item.productName,
+        unit_type: mapUnitToEnum(item.unitType),
+        quantity: item.quantity,
+        unit_price: item.unitPrice,
+        total_price: lineTotal,
+        created_by: userId,
+        updated_by: userId,
+      };
+    });
+
+    await db.query('invoice_items', {
+      method: 'POST',
+      body: itemsToInsert,
+    });
 
     const created = await this.findInvoiceById(invoiceId);
     if (!created) {
@@ -224,8 +253,8 @@ class InvoiceRepository {
       body: {
         shop_id: invoice.shopId,
         user_id: userId,
-        action: 'INVOICE_CANCELLED',
-        details: `Cancelled invoice ${invoice.invoiceNumber}. Deducted dues ₹${invoice.totalAmount} from customer outstanding balance.`,
+        action_type: 'INVOICE_CANCELLED',
+        description: `Cancelled invoice ${invoice.invoiceNumber}. Deducted dues ₹${invoice.totalAmount} from customer outstanding balance.`,
         created_at: new Date().toISOString(),
       }
     });

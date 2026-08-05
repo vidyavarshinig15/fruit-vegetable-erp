@@ -102,7 +102,7 @@ export const PaymentDetailsPage: React.FC = () => {
 
         // If payment is linked to an invoice, load invoice details
         if (payData.invoiceId) {
-          const invRes = await api.get(`/billing/invoices/${payData.invoiceId}`);
+          const invRes = await api.get(`/invoices/${payData.invoiceId}`);
           if (invRes.data?.success) {
             setInvoice(invRes.data.data);
           }

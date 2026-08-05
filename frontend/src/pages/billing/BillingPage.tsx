@@ -52,64 +52,82 @@ export const BillingPage: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [items, setItems] = useState<InvoiceLineItem[]>([]);
 
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64String = reader.result as string;
+        const base64Data = base64String.split(',')[1];
+        resolve(base64Data);
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
   const handlePdfUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const nameLower = file.name.toLowerCase();
-    let scannedItems: { name: string; qty: number }[] = [];
+    try {
+      const base64Data = await fileToBase64(file);
+      const payload = {
+        customerId: customerId || undefined,
+        fileName: file.name,
+        fileType: file.type,
+        fileSizeBytes: file.size,
+        fileData: base64Data,
+      };
 
-    // Parse filename keywords like tomato_30 or onion_50
-    const regex = /([a-z]+)[_-](\d+)/g;
-    let match;
-    while ((match = regex.exec(nameLower)) !== null) {
-      const name = match[1];
-      const qty = parseInt(match[2], 10);
-      if (name !== 'pdf' && name !== 'order' && name !== 'invoice' && name !== 'bill') {
-        scannedItems.push({ name, qty });
-      }
-    }
+      const res = await api.post('/orders/scan', payload);
+      if (res.data?.success && Array.isArray(res.data?.data)) {
+        const scannedItems = res.data.data;
+        const newItems = [...items];
+        let matchedCount = 0;
 
-    if (scannedItems.length === 0) {
-      scannedItems = [
-        { name: 'Tomato', qty: 25 },
-        { name: 'Potato', qty: 40 },
-        { name: 'Onion', qty: 35 }
-      ];
-    }
+        for (const item of scannedItems) {
+          let finalProductId = item.matchedProductId;
+          if (!finalProductId && item.suggestion?.matchedProductId) {
+            finalProductId = item.suggestion.matchedProductId;
+          }
 
-    const newItems = [...items];
-    let matchedCount = 0;
-
-    for (const scanned of scannedItems) {
-      const matched = products.find(p => p.name.toLowerCase().includes(scanned.name.toLowerCase()));
-      if (matched) {
-        matchedCount++;
-        const existingIdx = newItems.findIndex(i => i.productId === matched.id);
-        if (existingIdx > -1) {
-          const qty = newItems[existingIdx].quantity + scanned.qty;
-          newItems[existingIdx] = {
-            ...newItems[existingIdx],
-            quantity: qty,
-            totalPrice: qty * newItems[existingIdx].unitPrice
-          };
-        } else {
-          newItems.push({
-            productId: matched.id,
-            productName: matched.name,
-            unitType: matched.unitType,
-            quantity: scanned.qty,
-            unitPrice: matched.defaultRate,
-            originalPrice: matched.defaultRate,
-            totalPrice: scanned.qty * matched.defaultRate
-          });
+          if (finalProductId) {
+            const matchedProd = products.find(p => p.id === finalProductId);
+            if (matchedProd) {
+              matchedCount++;
+              const existingIdx = newItems.findIndex(i => i.productId === finalProductId);
+              const qty = item.quantity || 1;
+              const rate = matchedProd.defaultRate || 0;
+              if (existingIdx > -1) {
+                const newQty = newItems[existingIdx].quantity + qty;
+                newItems[existingIdx] = {
+                  ...newItems[existingIdx],
+                  quantity: newQty,
+                  totalPrice: newQty * newItems[existingIdx].unitPrice
+                };
+              } else {
+                newItems.push({
+                  productId: finalProductId,
+                  productName: matchedProd.name,
+                  unitType: matchedProd.unitType || 'Kg',
+                  quantity: qty,
+                  unitPrice: rate,
+                  originalPrice: rate,
+                  totalPrice: qty * rate
+                });
+              }
+            }
+          }
         }
-      }
-    }
 
-    setItems(newItems);
-    markDirty();
-    alert(`Scanned PDF "${file.name}"! Found & loaded ${matchedCount} items matching active shop catalog.`);
+        setItems(newItems);
+        markDirty();
+        alert(`Scanned PDF "${file.name}"! Found & loaded ${matchedCount} items matching active shop catalog.`);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert(err.response?.data?.message || 'Failed to scan PDF order document.');
+    }
   };
 
   // Selection Dropdowns lists
@@ -144,7 +162,8 @@ export const BillingPage: React.FC = () => {
         setCustomers((custRes.data.data || []).filter((c: any) => c.status === 'active'));
       }
       if (prodRes.data?.success) {
-        setProducts((prodRes.data.data || []).filter((p: any) => p.status === 'active'));
+        const prodList = prodRes.data.data?.products || prodRes.data.data || [];
+        setProducts(prodList.filter((p: any) => p.status === 'active'));
       }
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Failed to initialize catalog inventory context');

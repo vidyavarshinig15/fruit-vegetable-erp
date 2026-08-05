@@ -50,7 +50,8 @@ export const DailyPricesPage: React.FC = () => {
     try {
       const res = await api.get('/products');
       if (res.data?.success && res.data?.data) {
-        const mapped = (res.data.data as any[]).map((p) => ({
+        const prodList = res.data.data?.products || res.data.data || [];
+        const mapped = (prodList as any[]).map((p) => ({
           id: p.id,
           name: p.name,
           kannadaName: p.kannadaName || '',

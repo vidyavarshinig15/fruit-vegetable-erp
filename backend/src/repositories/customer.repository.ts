@@ -1,9 +1,11 @@
 import { ShopId, Customer, CreateCustomerDTO, UpdateCustomerDTO, CustomerFilterQuery, CustomerNote, CustomerDocument, ContactHistory, CustomerActivity } from '@raju-billing/shared';
+import crypto from 'crypto';
+import { db } from '../database/index.js';
 
 // Initial Seed Data for local testing and immediate evaluation
 const SEED_CUSTOMERS: Customer[] = [
   {
-    id: 'cust_raj_1',
+    id: '11111111-c111-1111-1111-111111111111',
     shopId: ShopId.RAJ_FRUITS_AND_VEGETABLES,
     customerCode: 'RAJC00001',
     name: 'Suresh Bangalore Veg Inn',
@@ -32,7 +34,7 @@ const SEED_CUSTOMERS: Customer[] = [
     notesList: [
       {
         id: 'note_raj_1_1',
-        customerId: 'cust_raj_1',
+        customerId: '11111111-c111-1111-1111-111111111111',
         text: 'Preferred delivery time is before 7 AM.',
         createdByEmail: 'admin@rajuvegetables.com',
         createdByName: 'Raju Super Admin',
@@ -42,7 +44,7 @@ const SEED_CUSTOMERS: Customer[] = [
     documents: [
       {
         id: 'doc_raj_1_1',
-        customerId: 'cust_raj_1',
+        customerId: '11111111-c111-1111-1111-111111111111',
         type: 'Visiting Card',
         name: 'Suresh_Visiting_Card.jpg',
         filePath: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
@@ -52,7 +54,7 @@ const SEED_CUSTOMERS: Customer[] = [
     contactHistory: [
       {
         id: 'log_raj_1_1',
-        customerId: 'cust_raj_1',
+        customerId: '11111111-c111-1111-1111-111111111111',
         type: 'Call',
         remarks: 'Discussed weekly balance payment. Confirmed they will pay on Saturday.',
         date: '2026-07-28T10:00:00.000Z',
@@ -62,7 +64,7 @@ const SEED_CUSTOMERS: Customer[] = [
     activities: [
       {
         id: 'act_raj_1_1',
-        customerId: 'cust_raj_1',
+        customerId: '11111111-c111-1111-1111-111111111111',
         action: 'Customer Created',
         details: 'Initial customer profile created by super admin.',
         timestamp: '2026-01-10T12:00:00.000Z',
@@ -71,7 +73,7 @@ const SEED_CUSTOMERS: Customer[] = [
     ]
   },
   {
-    id: 'cust_raj_2',
+    id: '22222222-c222-2222-2222-222222222222',
     shopId: ShopId.RAJ_FRUITS_AND_VEGETABLES,
     customerCode: 'RAJC00002',
     name: 'Venkatesh Caterers',
@@ -103,7 +105,7 @@ const SEED_CUSTOMERS: Customer[] = [
     activities: [
       {
         id: 'act_raj_2_1',
-        customerId: 'cust_raj_2',
+        customerId: '22222222-c222-2222-2222-222222222222',
         action: 'Customer Created',
         details: 'Initial customer profile created.',
         timestamp: '2026-03-15T09:00:00.000Z',
@@ -112,7 +114,7 @@ const SEED_CUSTOMERS: Customer[] = [
     ]
   },
   {
-    id: 'cust_gr_1',
+    id: '33333333-c333-3333-3333-333333333333',
     shopId: ShopId.G_R_FRUITS_AND_VEGETABLES,
     customerCode: 'GRC00001',
     name: 'Girish Family Restaurant',
@@ -144,7 +146,7 @@ const SEED_CUSTOMERS: Customer[] = [
     activities: [
       {
         id: 'act_gr_1_1',
-        customerId: 'cust_gr_1',
+        customerId: '33333333-c333-3333-3333-333333333333',
         action: 'Customer Created',
         details: 'Customer profile set up for G R Fruits store.',
         timestamp: '2026-02-20T10:00:00.000Z',
@@ -171,16 +173,65 @@ class CustomerRepository {
       prefix = 'PKC';
     }
 
-    const count = Array.from(this.customers.values()).filter((c) => c.shopId === shopId).length + 1;
-    return `${prefix}${String(count).padStart(5, '0')}`;
+    const list = Array.from(this.customers.values()).filter((c) => c.shopId === shopId);
+    const count = list.length + 1;
+    const rand = Math.floor(100 + Math.random() * 900);
+    return `${prefix}${String(count).padStart(5, '0')}-${rand}`;
+  }
+
+  private async syncFromDb(): Promise<void> {
+    try {
+      const rows = await db.query('customers');
+      for (const row of rows) {
+        const id = row.id;
+        const existing = this.customers.get(id);
+        const mapped: Customer = {
+          id: row.id,
+          shopId: row.shop_id,
+          customerCode: row.customer_code,
+          name: row.name,
+          ownerName: existing?.ownerName || row.name,
+          contactPerson: existing?.contactPerson || row.name,
+          mobileNumber: row.mobile_number,
+          alternateMobile: row.alternate_mobile || undefined,
+          whatsappNumber: existing?.whatsappNumber || row.mobile_number,
+          email: row.email || undefined,
+          address: row.address || '',
+          area: existing?.area || 'APMC Yard',
+          city: row.city || 'Bengaluru',
+          state: existing?.state || 'Karnataka',
+          pincode: row.pincode || '',
+          businessType: existing?.businessType || 'Other',
+          openingBalance: Number(row.opening_balance || 0),
+          currentOutstanding: Number(row.current_balance || 0),
+          creditLimit: Number(row.credit_limit || 0),
+          paymentTerms: existing?.paymentTerms || 'Cash Customer',
+          status: row.status,
+          notes: row.notes || '',
+          tags: existing?.tags || ['New Customer'],
+          customerSince: row.created_at || new Date().toISOString(),
+          createdAt: row.created_at || new Date().toISOString(),
+          updatedAt: row.updated_at || new Date().toISOString(),
+          notesList: existing?.notesList || [],
+          documents: existing?.documents || [],
+          contactHistory: existing?.contactHistory || [],
+          activities: existing?.activities || [],
+        };
+        this.customers.set(id, mapped);
+      }
+    } catch (err) {
+      console.error('Failed to sync customers from DB:', err);
+    }
   }
 
   async findById(id: string): Promise<Customer | null> {
+    await this.syncFromDb();
     const c = this.customers.get(id);
     return c ? { ...c } : null;
   }
 
   async findByMobile(shopId: ShopId, mobile: string): Promise<Customer | null> {
+    await this.syncFromDb();
     for (const c of this.customers.values()) {
       if (c.shopId === shopId && c.mobileNumber === mobile && c.status !== 'archived') {
         return { ...c };
@@ -190,6 +241,7 @@ class CustomerRepository {
   }
 
   async findByWhatsApp(shopId: ShopId, whatsapp: string): Promise<Customer | null> {
+    await this.syncFromDb();
     for (const c of this.customers.values()) {
       if (c.shopId === shopId && c.whatsappNumber === whatsapp && c.status !== 'archived') {
         return { ...c };
@@ -199,6 +251,7 @@ class CustomerRepository {
   }
 
   async findByName(shopId: ShopId, name: string): Promise<Customer | null> {
+    await this.syncFromDb();
     const normalized = name.toLowerCase().trim();
     for (const c of this.customers.values()) {
       if (c.shopId === shopId && c.name.toLowerCase().trim() === normalized && c.status !== 'archived') {
@@ -209,6 +262,7 @@ class CustomerRepository {
   }
 
   async findAll(shopId: ShopId, query: CustomerFilterQuery = {}): Promise<{ customers: Customer[]; total: number }> {
+    await this.syncFromDb();
     let list = Array.from(this.customers.values()).filter(
       (c) => c.shopId === shopId && c.status !== 'archived'
     );
@@ -267,9 +321,31 @@ class CustomerRepository {
       if (duplicateWA) throw new Error('DUPLICATE_WHATSAPP_NUMBER');
     }
 
-    const id = `cust_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+    const id = crypto.randomUUID();
     const now = new Date().toISOString();
     const customerCode = this.generateNextCustomerCode(shopId);
+
+    // Insert customer row into PostgreSQL database to satisfy type and FK checks
+    await db.query('customers', {
+      method: 'POST',
+      body: {
+        id,
+        shop_id: shopId,
+        customer_code: customerCode,
+        name: dto.name,
+        mobile_number: dto.mobileNumber,
+        alternate_mobile: dto.alternateMobile || null,
+        email: dto.email || null,
+        address: dto.address,
+        city: dto.city || 'Bengaluru',
+        pincode: dto.pincode,
+        credit_limit: dto.creditLimit ?? 0,
+        opening_balance: dto.openingBalance ?? 0,
+        current_balance: dto.openingBalance ?? 0,
+        notes: dto.notes || '',
+        status: 'active',
+      }
+    });
 
     const record: Customer = {
       ...dto,
@@ -304,6 +380,7 @@ class CustomerRepository {
   }
 
   async update(id: string, dto: UpdateCustomerDTO, userName: string): Promise<Customer | null> {
+    await this.syncFromDb();
     const record = this.customers.get(id);
     if (!record) return null;
 
@@ -353,11 +430,27 @@ class CustomerRepository {
       updatedAt: now,
     };
 
+    // Update DB
+    const body: any = {};
+    if (dto.name !== undefined) body.name = dto.name;
+    if (dto.mobileNumber !== undefined) body.mobile_number = dto.mobileNumber;
+    if (dto.alternateMobile !== undefined) body.alternate_mobile = dto.alternateMobile || null;
+    if (dto.email !== undefined) body.email = dto.email || null;
+    if (dto.address !== undefined) body.address = dto.address;
+    if (dto.city !== undefined) body.city = dto.city;
+    if (dto.pincode !== undefined) body.pincode = dto.pincode;
+    if (dto.creditLimit !== undefined) body.credit_limit = dto.creditLimit;
+    if (dto.status !== undefined) body.status = dto.status;
+    body.updated_at = now;
+
+    await db.query(`customers?id=eq.${id}`, { method: 'PATCH', body });
+
     this.customers.set(id, updatedRecord);
     return { ...updatedRecord };
   }
 
   async archive(id: string, userName: string): Promise<boolean> {
+    await this.syncFromDb();
     const record = this.customers.get(id);
     if (!record) return false;
 
@@ -375,12 +468,22 @@ class CustomerRepository {
     record.status = 'archived';
     record.activities = activities;
     record.updatedAt = now;
+
+    await db.query(`customers?id=eq.${id}`, {
+      method: 'PATCH',
+      body: {
+        status: 'archived',
+        is_deleted: true,
+        deleted_at: now,
+      }
+    });
     
     this.customers.set(id, record);
     return true;
   }
 
   async activate(id: string, userName: string): Promise<boolean> {
+    await this.syncFromDb();
     const record = this.customers.get(id);
     if (!record) return false;
 
@@ -398,6 +501,14 @@ class CustomerRepository {
     record.status = 'active';
     record.activities = activities;
     record.updatedAt = now;
+
+    await db.query(`customers?id=eq.${id}`, {
+      method: 'PATCH',
+      body: {
+        status: 'active',
+        updated_at: now,
+      }
+    });
     
     this.customers.set(id, record);
     return true;
@@ -541,6 +652,14 @@ class CustomerRepository {
 
     this.customers.set(id, record);
     return log;
+  }
+
+  updateCurrentOutstanding(id: string, newBalance: number): void {
+    const record = this.customers.get(id);
+    if (record) {
+      record.currentOutstanding = newBalance;
+      this.customers.set(id, record);
+    }
   }
 }
 

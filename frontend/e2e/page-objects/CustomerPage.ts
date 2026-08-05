@@ -22,6 +22,10 @@ export class CustomerPage {
     
     // Validate we redirect back to Customer Directory listing with the new customer visible
     await expect(this.page.locator('main h1')).toContainText('Customer Directory', { timeout: 15000 });
+    const searchInput = this.page.locator('input[placeholder*="name"]');
+    await searchInput.fill(name);
+    await searchInput.press('Tab');
+    await this.page.waitForTimeout(500);
     await expect(this.page.locator(`text=${name}`)).toBeVisible({ timeout: 15000 });
   }
 }

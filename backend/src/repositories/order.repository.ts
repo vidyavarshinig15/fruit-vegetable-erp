@@ -84,10 +84,9 @@ class OrderRepository {
     return matrix[a.length][b.length];
   }
 
-  // Similarity matcher matching OCR items with shop catalog products
-  private async matchOcrItemsToShopCatalog(
+  public async matchOcrItemsToShopCatalog(
     shopId: ShopId,
-    customerId: string,
+    customerId: string | undefined,
     rawItems: { productName: string; quantity: number; unitType: string }[]
   ): Promise<OcrItem[]> {
     // Load active products of this shop context
@@ -102,8 +101,9 @@ class OrderRepository {
     // Fetch previous confirmed product IDs from customer verified uploads
     const confirmedProductIds = new Set<string>();
     const frequencyMap = new Map<string, number>();
-    try {
-      const pastOrders = await db.query(`customer_uploaded_orders?customer_id=eq.${customerId}&is_deleted=eq.false`);
+    if (customerId) {
+      try {
+        const pastOrders = await db.query(`customer_uploaded_orders?customer_id=eq.${customerId}&is_deleted=eq.false`);
       for (const order of pastOrders) {
         if (order.ocr_status === 'VERIFIED' || order.ocr_status === 'INVOICE_GENERATED') {
           if (order.ocr_raw_text) {
@@ -121,6 +121,7 @@ class OrderRepository {
     } catch (err) {
       console.error('Failed to load customer previous match frequencies', err);
     }
+    }
 
     return rawItems.map((raw) => {
       const queryName = raw.productName.toLowerCase().trim();
@@ -136,7 +137,16 @@ class OrderRepository {
         (p) => p.name.includes(cleanedQuery) || cleanedQuery.includes(p.name)
       );
 
-      const candidates = exactMatches.length > 0 ? exactMatches : partialMatches;
+      const ignoredWords = ['pdf', 'order', 'invoice', 'bill', 'fruits', 'vegetables', 'list', 'doc', 'client', 'customer', 'upload', 'file', 'local', 'hybrid', 'fresh', 'kg', 'g', 'grams', 'piece', 'pcs', 'dozen', 'box', 'crate', 'bag', 'bundle', 'packet', 'tray'];
+      const queryTokens = cleanedQuery.split(/[\s_\-]+/).filter((w: string) => w.length >= 3 && !ignoredWords.includes(w));
+      const tokenMatches = catalog.filter((p) => {
+        const prodTokens = p.name.split(/[\s_\-]+/).filter((w: string) => w.length >= 3);
+        return queryTokens.some((qt: string) => prodTokens.some((pt: string) => pt.includes(qt) || qt.includes(pt)));
+      });
+
+      const candidates = exactMatches.length > 0 
+        ? exactMatches 
+        : (partialMatches.length > 0 ? partialMatches : tokenMatches);
 
       let suggestion: any = null;
 
@@ -219,32 +229,24 @@ class OrderRepository {
   }
 
   // Parse filename keywords or generate mocks
-  private simulateOcrExtraction(fileName: string): { productName: string; quantity: number; unitType: string }[] {
+  public simulateOcrExtraction(fileName: string, products: any[]): { productName: string; quantity: number; unitType: string }[] {
     const rawItems: { productName: string; quantity: number; unitType: string }[] = [];
     const lowerName = fileName.toLowerCase();
 
     // Regex parsing keywords e.g. "order_tomato_30_potato_50.pdf"
     const regex = /([a-z]+)[_-](\d+)/g;
     let match;
+    const ignoredWords = ['pdf', 'order', 'invoice', 'bill', 'fruits', 'vegetables', 'list', 'doc', 'client', 'customer', 'upload', 'file'];
     while ((match = regex.exec(lowerName)) !== null) {
       const name = match[1];
       const qty = parseInt(match[2], 10);
-      if (name !== 'order' && name !== 'invoice' && name !== 'bill') {
+      if (!ignoredWords.includes(name)) {
         rawItems.push({
           productName: name.charAt(0).toUpperCase() + name.slice(1),
           quantity: qty,
           unitType: 'Kg',
         });
       }
-    }
-
-    // Fallback mocks
-    if (rawItems.length === 0) {
-      rawItems.push(
-        { productName: 'Tomato Local', quantity: 20, unitType: 'Kg' },
-        { productName: 'Onion Big', quantity: 50, unitType: 'Kg' },
-        { productName: 'Potato Fresh', quantity: 30, unitType: 'Kg' }
-      );
     }
 
     return rawItems;
@@ -273,8 +275,32 @@ class OrderRepository {
     const buffer = Buffer.from(fileData, 'base64');
     fs.writeFileSync(absolutePath, buffer);
 
-    // 3. Simulates OCR extraction & catalog similarity matching
-    const rawExtracted = this.simulateOcrExtraction(fileName);
+    // 3. OCR extraction & catalog similarity matching
+    const productsRes = await db.query(`products?shop_id=eq.${shopId}&status=eq.active&is_deleted=eq.false`);
+    
+    let rawExtracted: any[] = [];
+    let parsedSuccess = false;
+
+    if (fileType === 'application/pdf') {
+      try {
+        const pythonPath = '/Users/vidyavarshini/miniconda3/bin/python';
+        const scriptPath = '/Users/vidyavarshini/.gemini/antigravity-ide/brain/fb836f0b-5a9b-4089-abc6-33fb305de04b/scratch/parse_pdf.py';
+        const { execSync } = await import('child_process');
+        const output = execSync(`"${pythonPath}" "${scriptPath}" "${absolutePath}"`, { encoding: 'utf-8' });
+        const res = JSON.parse(output);
+        if (res.success && res.items && res.items.length > 0) {
+          rawExtracted = res.items;
+          parsedSuccess = true;
+        }
+      } catch (e) {
+        console.error('Failed to parse PDF using python script:', e);
+      }
+    }
+
+    if (!parsedSuccess) {
+      rawExtracted = this.simulateOcrExtraction(fileName, productsRes);
+    }
+
     const matchedItems = await this.matchOcrItemsToShopCatalog(shopId, customerId, rawExtracted);
 
     const serializedOcr = JSON.stringify({
@@ -307,8 +333,8 @@ class OrderRepository {
       body: {
         shop_id: shopId,
         user_id: userId,
-        action: 'ORDER_UPLOADED',
-        details: `Uploaded order document ${fileName} (${(fileSizeBytes / 1024).toFixed(1)} KB). OCR matching completed.`,
+        action_type: 'ORDER_UPLOADED',
+        description: `Uploaded order document ${fileName} (${(fileSizeBytes / 1024).toFixed(1)} KB). OCR matching completed.`,
         created_at: new Date().toISOString(),
       }
     });
@@ -342,8 +368,8 @@ class OrderRepository {
       body: {
         shop_id: original.shopId,
         user_id: userId,
-        action: 'ORDER_VERIFIED',
-        details: `Verified OCR items for order ${original.orderNumber}. Ready for invoice generation.`,
+        action_type: 'ORDER_VERIFIED',
+        description: `Verified OCR items for order ${original.orderNumber}. Ready for invoice generation.`,
         created_at: new Date().toISOString(),
       }
     });
@@ -394,8 +420,8 @@ class OrderRepository {
       body: {
         shop_id: original.shopId,
         user_id: userId,
-        action: 'ORDER_DELETED',
-        details: `Deleted order document ${original.orderNumber}.`,
+        action_type: 'ORDER_DELETED',
+        description: `Deleted order document ${original.orderNumber}.`,
         created_at: new Date().toISOString(),
       }
     });

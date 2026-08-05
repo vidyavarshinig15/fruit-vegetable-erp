@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 export const manualAdjustmentSchema = z.object({
-  customerId: z.string().uuid('Invalid customer ID'),
+  customerId: z.string().min(1, 'Customer ID is required'),
   amount: z.number().gt(0, 'Adjustment amount must be greater than zero'),
   type: z.enum(['DEBIT', 'CREDIT'], {
     errorMap: () => ({ message: 'Adjustment type must be DEBIT or CREDIT' }),

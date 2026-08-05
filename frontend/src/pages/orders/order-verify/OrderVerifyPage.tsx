@@ -71,7 +71,8 @@ export const OrderVerifyPage: React.FC = () => {
       }
 
       if (prodRes.data?.success) {
-        setProducts((prodRes.data.data || []).filter((p: any) => p.status === 'active'));
+        const prodList = prodRes.data.data?.products || prodRes.data.data || [];
+        setProducts(prodList.filter((p: any) => p.status === 'active'));
       }
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Failed to initialize manual verification page.');

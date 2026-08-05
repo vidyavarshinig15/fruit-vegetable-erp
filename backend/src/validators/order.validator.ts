@@ -8,7 +8,7 @@ const allowedMimeTypes = [
 ];
 
 export const uploadOrderSchema = z.object({
-  customerId: z.string().uuid('Invalid customer ID'),
+  customerId: z.string().min(1, 'Customer ID is required'),
   fileName: z.string().min(1, 'File name is required'),
   fileType: z.string().refine((val) => allowedMimeTypes.includes(val), {
     message: 'Unsupported file type. Only PDF and PNG/JPEG/WEBP image uploads are allowed.',

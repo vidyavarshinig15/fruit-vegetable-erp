@@ -1,4 +1,7 @@
 import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: path.resolve(process.cwd(), '../.env') });
 dotenv.config();
 
 const SUPABASE_URL = process.env.SUPABASE_URL || '';
@@ -12,9 +15,13 @@ const restUrl = SUPABASE_URL.endsWith('/')
   ? `${SUPABASE_URL}rest/v1`
   : `${SUPABASE_URL}/rest/v1`;
 
-const sanitizeBodyUUIDs = (body: any) => {
-  if (!body || typeof body !== 'object') return body;
-  const uuidKeys = ['created_by', 'updated_by', 'deleted_by', 'p_created_by', 'p_updated_by'];
+const sanitizeBodyUUIDs = (body: any): any => {
+  if (!body) return body;
+  if (Array.isArray(body)) {
+    return body.map(sanitizeBodyUUIDs);
+  }
+  if (typeof body !== 'object') return body;
+  const uuidKeys = ['created_by', 'updated_by', 'deleted_by', 'p_created_by', 'p_updated_by', 'user_id'];
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   const sanitized = { ...body };
   for (const key of Object.keys(sanitized)) {

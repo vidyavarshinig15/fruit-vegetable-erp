@@ -118,7 +118,6 @@ export const OrderUploadPage: React.FC = () => {
 
       const res = await api.post('/orders', payload);
       if (res.data?.success && res.data?.data) {
-        alert('File ingested successfully. Proceeding to verification page...');
         navigate(`/orders/${res.data.data.id}/verify`);
       }
     } catch (err: any) {

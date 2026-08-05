@@ -237,3 +237,20 @@ export const cancelPaymentRecord = async (req: AuthenticatedRequest, res: Respon
     next(error);
   }
 };
+
+export const getReceiptsList = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  try {
+    const shopId = validateShopContext(req, res);
+    if (!shopId) return;
+
+    const receipts = await paymentRepository.findAllReceipts(shopId);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Receipts list retrieved successfully',
+      data: receipts,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

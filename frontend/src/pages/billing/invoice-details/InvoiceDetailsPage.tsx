@@ -72,11 +72,12 @@ export const InvoiceDetailsPage: React.FC = () => {
   const navigate = useNavigate();
 
   // Print selector state
-  const [printFormat, setPrintFormat] = useState<'A4' | '80mm'>('A4');
+  const [printFormat, setPrintFormat] = useState<'A4' | '80mm' | 'WholesaleGrid'>('WholesaleGrid');
 
   // Data states
   const [invoice, setInvoice] = useState<any | null>(null);
   const [customer, setCustomer] = useState<any | null>(null);
+  const [products, setProducts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -84,7 +85,11 @@ export const InvoiceDetailsPage: React.FC = () => {
     setIsLoading(true);
     setErrorMsg(null);
     try {
-      const invRes = await api.get(`/invoices/${id}`);
+      const [invRes, prodRes] = await Promise.all([
+        api.get(`/invoices/${id}`),
+        api.get('/products')
+      ]);
+
       if (invRes.data?.success) {
         setInvoice(invRes.data.data);
         
@@ -93,6 +98,14 @@ export const InvoiceDetailsPage: React.FC = () => {
         if (custRes.data?.success) {
           setCustomer(custRes.data.data);
         }
+      }
+
+      if (prodRes.data?.success) {
+        const prodList = prodRes.data.data?.products || prodRes.data.data || [];
+        const sortedActive = prodList
+          .filter((p: any) => p.status === 'active')
+          .sort((a: any, b: any) => a.name.localeCompare(b.name));
+        setProducts(sortedActive);
       }
     } catch (err: any) {
       setErrorMsg(err.response?.data?.message || 'Failed to retrieve invoice details.');
@@ -167,6 +180,8 @@ export const InvoiceDetailsPage: React.FC = () => {
             width: 100%;
             background: white !important;
             color: black !important;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
           }
           .no-print {
             display: none !important;
@@ -190,6 +205,7 @@ export const InvoiceDetailsPage: React.FC = () => {
               className="text-xs font-bold bg-transparent text-slate-850 dark:text-white focus:outline-none border-none cursor-pointer"
             >
               <option value="A4">A4 Full Invoice</option>
+              <option value="WholesaleGrid">2-Column Checklist Grid</option>
               <option value="80mm">80mm Thermal Receipt</option>
             </select>
           </div>
@@ -323,6 +339,179 @@ export const InvoiceDetailsPage: React.FC = () => {
             <div className="border-t border-slate-150 pt-4 text-center text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-loose">
               Thank you for your wholesale business!
             </div>
+          </div>
+        ) : printFormat === 'WholesaleGrid' ? (
+          /* WHOLESALE GRID CHECKLIST (2-COLUMN) FORMAT */
+          <div className="border-[3px] border-red-700 p-4 font-sans text-xs select-none">
+            {/* Header branding */}
+            <div className="flex justify-between items-start border-b border-red-750 pb-2 mb-2">
+              <div className="text-red-700 font-bold text-xs uppercase">
+                Prop: {activeShop.ownerName || 'G. SRIRANGARAJU'}
+              </div>
+              <div className="text-center flex-1">
+                <div className="flex justify-center items-baseline gap-2">
+                  <span className="text-4xl font-black text-red-700 tracking-wider">
+                    {activeShop.name?.split(' ')[0]}
+                  </span>
+                  <span className="text-lg font-black text-emerald-800 uppercase">
+                    {activeShop.name?.split(' ').slice(1).join(' ')}
+                  </span>
+                </div>
+                <div className="text-[9px] text-slate-600 font-bold uppercase mt-0.5">
+                  {activeShop.address}, {activeShop.city} - {activeShop.pincode}
+                </div>
+                <h3 className="no-print text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                  TAX INVOICE
+                </h3>
+              </div>
+              <div className="text-right text-[10px] font-bold text-slate-700 leading-tight">
+                <div>Mob: {activeShop.mobileNumber || '9008741906'}</div>
+              </div>
+            </div>
+
+            {/* Bill Info Row */}
+            <div className="flex justify-between items-center text-xs font-bold border-b border-red-750 pb-2 mb-3">
+              <div className="text-red-700 flex items-center gap-1">
+                <span>Bill NO:</span>
+                <span className="font-black border border-red-700 px-2 py-0.5 bg-red-50">{invoice.invoiceNumber}</span>
+              </div>
+              <div className="text-red-700 font-black uppercase text-center flex-1 mx-4">
+                TO - {customer?.name?.toUpperCase()}
+              </div>
+              <div className="text-right flex items-center gap-4">
+                <div className="text-slate-900 font-black">Date: {new Date(invoice.invoiceDate).toLocaleDateString()}</div>
+                <div className="text-red-700 font-black">Total items: <span className="underline">{invoice.items?.length || 0}</span></div>
+              </div>
+            </div>
+
+            {/* The 2-Column Grid */}
+            {(() => {
+              const numRows = Math.max(40, Math.ceil(products.length / 2));
+              const leftCols = [];
+              const rightCols = [];
+
+              for (let i = 0; i < numRows; i++) {
+                // Left column item
+                const leftProd = products[i] || null;
+                const leftMatched = leftProd ? invoice.items?.find((item: any) => item.productId === leftProd.id) : null;
+                leftCols.push({
+                  slNo: i + 1,
+                  name: leftProd ? leftProd.name : '-',
+                  unitType: leftProd ? leftProd.unitType : 'Kg',
+                  quantity: leftMatched ? Number(leftMatched.quantity) : null,
+                  amount: leftMatched ? Number(leftMatched.totalPrice) : null,
+                });
+
+                // Right column item
+                const rightIdx = i + numRows;
+                const rightProd = products[rightIdx] || null;
+                const rightMatched = rightProd ? invoice.items?.find((item: any) => item.productId === rightProd.id) : null;
+                rightCols.push({
+                  slNo: rightIdx + 1,
+                  name: rightProd ? rightProd.name : '-',
+                  unitType: rightProd ? rightProd.unitType : 'Kg',
+                  quantity: rightMatched ? Number(rightMatched.quantity) : null,
+                  amount: rightMatched ? Number(rightMatched.totalPrice) : null,
+                });
+              }
+
+              const total1 = leftCols.reduce((sum, item) => sum + (item.amount || 0), 0);
+              const total2 = rightCols.reduce((sum, item) => sum + (item.amount || 0), 0);
+
+              return (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Left Column Table */}
+                    <table className="w-full border-collapse border border-emerald-800 text-[10px]">
+                      <thead>
+                        <tr className="bg-emerald-800 text-white font-bold uppercase text-center">
+                          <th className="border border-emerald-850 py-0.5 px-1 w-[35px]">Sl No</th>
+                          <th className="border border-emerald-850 py-0.5 px-1 text-left">Items</th>
+                          <th className="border border-emerald-850 py-0.5 px-1 w-[80px]">Quantity</th>
+                          <th className="border border-emerald-850 py-0.5 px-1 w-[70px]">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leftCols.map((item) => (
+                          <tr key={item.slNo} className="hover:bg-slate-50 border-b border-slate-200">
+                            <td className="border border-emerald-850 text-center py-0.5 font-bold text-slate-500">{item.slNo}</td>
+                            <td className="border border-emerald-850 px-1 py-0.5 font-black uppercase text-slate-800 truncate max-w-[130px]">{item.name}</td>
+                            <td className="border border-emerald-850 text-center py-0.5 font-bold text-emerald-900">
+                              {item.quantity !== null ? `${item.quantity.toFixed(2)} ${item.unitType}` : item.unitType}
+                            </td>
+                            <td className="border border-emerald-850 text-right pr-1 py-0.5 font-black text-slate-900">
+                              {item.amount !== null ? `₹ ${item.amount.toFixed(2)}` : '₹ -'}
+                            </td>
+                          </tr>
+                        ))}
+                        {/* Total-1 row */}
+                        <tr className="bg-emerald-50 font-black text-emerald-900">
+                          <td colSpan={3} className="border border-emerald-850 text-right pr-2 py-1 uppercase tracking-wider text-[9px]">Total-1</td>
+                          <td className="border border-emerald-850 text-right pr-1 py-1 font-black">₹ {total1.toFixed(2)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+
+                    {/* Right Column Table */}
+                    <table className="w-full border-collapse border border-emerald-800 text-[10px]">
+                      <thead>
+                        <tr className="bg-emerald-800 text-white font-bold uppercase text-center">
+                          <th className="border border-emerald-850 py-0.5 px-1 w-[35px]">Sl No</th>
+                          <th className="border border-emerald-850 py-0.5 px-1 text-left">Items</th>
+                          <th className="border border-emerald-850 py-0.5 px-1 w-[80px]">Quantity</th>
+                          <th className="border border-emerald-850 py-0.5 px-1 w-[70px]">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rightCols.map((item) => (
+                          <tr key={item.slNo} className="hover:bg-slate-50 border-b border-slate-200">
+                            <td className="border border-emerald-850 text-center py-0.5 font-bold text-slate-500">{item.slNo}</td>
+                            <td className="border border-emerald-850 px-1 py-0.5 font-black uppercase text-slate-800 truncate max-w-[130px]">{item.name}</td>
+                            <td className="border border-emerald-850 text-center py-0.5 font-bold text-emerald-900">
+                              {item.quantity !== null ? `${item.quantity.toFixed(2)} ${item.unitType}` : item.unitType}
+                            </td>
+                            <td className="border border-emerald-850 text-right pr-1 py-0.5 font-black text-slate-900">
+                              {item.amount !== null ? `₹ ${item.amount.toFixed(2)}` : '₹ -'}
+                            </td>
+                          </tr>
+                        ))}
+                        {/* Total-2 row */}
+                        <tr className="bg-emerald-50 font-black text-emerald-900">
+                          <td colSpan={3} className="border border-emerald-850 text-right pr-2 py-1 uppercase tracking-wider text-[9px]">Total-2</td>
+                          <td className="border border-emerald-850 text-right pr-1 py-1 font-black">₹ {total2.toFixed(2)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Summary Grid Footer */}
+                  <table className="w-full border-collapse border border-emerald-800 text-xs mt-4">
+                    <tbody>
+                      <tr className="border border-emerald-800 font-black">
+                        <td className="border border-emerald-800 p-2 w-[40%] text-center uppercase tracking-wide">
+                          <span className="block text-[9px] font-bold text-slate-500 uppercase">Grand Total (Total-1 + Total-2)</span>
+                          <span className="text-xl font-black text-red-700 mt-1 block">₹ {invoice.totalAmount.toLocaleString()}</span>
+                        </td>
+                        <td className="border border-emerald-800 p-2 text-center uppercase tracking-wide text-emerald-900">
+                          For {activeShop.name}
+                        </td>
+                      </tr>
+                      <tr className="border border-emerald-800 font-bold">
+                        <td className="border border-emerald-800 p-2 text-center">
+                          <span className="block text-[9px] font-bold text-slate-500 uppercase">Amount in Words</span>
+                          <span className="text-[10px] font-black text-red-700 italic block mt-1">
+                            {numberToWords(invoice.totalAmount)}
+                          </span>
+                        </td>
+                        <td className="border border-emerald-800 p-2 text-center valign-bottom pt-8">
+                          <span className="border-t border-slate-400 pt-1 text-[10px] uppercase font-bold text-slate-600 block">Signature</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })()}
           </div>
         ) : (
           /* 80mm THERMAL RECEIPT FORMAT */

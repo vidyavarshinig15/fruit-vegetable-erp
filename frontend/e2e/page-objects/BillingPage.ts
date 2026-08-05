@@ -10,14 +10,18 @@ export class BillingPage {
 
   async createInvoice(customerName: string, items: { name: string; qty: number; rate: number }[]) {
     // Select customer
-    const option = this.page.locator('select[label="Customer *"] option', { hasText: customerName });
-    const value = await option.getAttribute('value');
-    await this.page.selectOption('select[label="Customer *"]', value || '');
+    const option = this.page.locator(`select[label="Customer *"] option:has-text("${customerName}")`);
+    await option.waitFor({ state: 'attached', timeout: 15000 });
+    const val = await option.getAttribute('value');
+    if (!val) throw new Error(`Customer option for ${customerName} not found`);
+    await this.page.selectOption('select[label="Customer *"]', val);
 
     for (const item of items) {
-      const itemOption = this.page.locator('select[label="Select Item *"] option', { hasText: item.name });
-      const itemValue = await itemOption.getAttribute('value');
-      await this.page.selectOption('select[label="Select Item *"]', itemValue || '');
+      const productOption = this.page.locator(`select[label="Select Item *"] option:has-text("${item.name}")`);
+      await productOption.waitFor({ state: 'attached', timeout: 15000 });
+      const productVal = await productOption.getAttribute('value');
+      if (!productVal) throw new Error(`Product option for ${item.name} not found`);
+      await this.page.selectOption('select[label="Select Item *"]', productVal);
       await this.page.fill('input[label="Quantity *"]', String(item.qty));
       await this.page.fill('label:has-text("Rate") + input', String(item.rate));
       await this.page.click('button:has-text("Append Item")');

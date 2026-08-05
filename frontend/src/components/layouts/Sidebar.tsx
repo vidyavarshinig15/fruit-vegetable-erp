@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
 import { useShop } from '@/contexts/ShopContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -32,6 +33,9 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
   const { activeShop } = useShop();
+  const { user } = useAuth();
+
+  const isOwner = user?.email === 'vidyavarshini15@gmail.com';
 
   const navItems = [
     { label: t('dashboard'), path: ROUTES.DASHBOARD, icon: LayoutDashboard },
@@ -47,8 +51,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
     { label: t('pending'), path: ROUTES.PENDING, icon: Clock },
     { label: t('partial'), path: ROUTES.PARTIAL, icon: Percent },
     { label: t('cleared'), path: ROUTES.CLEARED, icon: CheckCircle2 },
-    { label: t('backup'), path: ROUTES.BACKUP, icon: HardDriveDownload },
-    { label: t('settings'), path: ROUTES.SETTINGS, icon: Settings },
+    ...(isOwner ? [
+      { label: t('backup'), path: ROUTES.BACKUP, icon: HardDriveDownload },
+      { label: t('settings'), path: ROUTES.SETTINGS, icon: Settings }
+    ] : []),
     { label: t('navProfile'), path: ROUTES.PROFILE, icon: UserCheck },
   ];
 

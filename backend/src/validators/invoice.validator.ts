@@ -10,7 +10,7 @@ const invoiceItemSchema = z.object({
 });
 
 export const createInvoiceSchema = z.object({
-  customerId: z.string().uuid('Invalid customer ID'),
+  customerId: z.string().min(1, 'Customer ID is required'),
   invoiceDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format'),
   dueDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Due date must be in YYYY-MM-DD format').nullable().optional(),
   notes: z.string().nullable().optional(),

@@ -3,7 +3,7 @@ import { z } from 'zod';
 const paymentModes = ['CASH', 'UPI', 'BANK_TRANSFER', 'CHEQUE', 'OTHER'] as const;
 
 export const createPaymentSchema = z.object({
-  customerId: z.string().uuid('Invalid customer ID'),
+  customerId: z.string().min(1, 'Customer ID is required'),
   invoiceId: z.string().uuid('Invalid invoice ID').nullable().optional(),
   paymentDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Payment date must be in YYYY-MM-DD format'),
   amount: z.number().gt(0, 'Payment amount must be greater than zero'),

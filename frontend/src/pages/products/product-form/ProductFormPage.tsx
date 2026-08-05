@@ -65,13 +65,12 @@ export const ProductFormPage: React.FC = () => {
 
   // Load existing product if in Edit Mode
   useEffect(() => {
-    fetchCategories();
-    
-    if (isEdit) {
+    const loadData = async () => {
       setIsLoading(true);
-      api
-        .get(`/products/${id}`)
-        .then((res) => {
+      try {
+        await fetchCategories();
+        if (isEdit) {
+          const res = await api.get(`/products/${id}`);
           if (res.data?.success && res.data?.data) {
             const prod = res.data.data;
             setName(prod.name);
@@ -84,14 +83,14 @@ export const ProductFormPage: React.FC = () => {
             setIsFavourite(prod.isFavourite);
             setImageUrl(prod.imageUrl || null);
           }
-        })
-        .catch((err) => {
-          setGlobalError(err.response?.data?.message || 'Failed to load product catalog data');
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    }
+        }
+      } catch (err: any) {
+        setGlobalError(err.response?.data?.message || 'Failed to load product catalog data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
   }, [id, isEdit, fetchCategories]);
 
   // Set window unsavedChanges flag

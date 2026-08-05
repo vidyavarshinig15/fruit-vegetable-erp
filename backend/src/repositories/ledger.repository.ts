@@ -76,6 +76,8 @@ class LedgerRepository {
       }
     });
 
+    customerRepository.updateCurrentOutstanding(entry.customerId, runningBalance);
+
     return mapDbToLedger(rows[0], 'System');
   }
 

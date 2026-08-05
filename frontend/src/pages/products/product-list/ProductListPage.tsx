@@ -194,42 +194,115 @@ export const ProductListPage: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Simulate bulk product extraction
-    const mockProducts = [
-      { name: 'Apple Shimla', category: 'Fruits', rate: 120, minRate: 100, unit: 'Kg' },
-      { name: 'Banana Yelakki', category: 'Fruits', rate: 60, minRate: 50, unit: 'Kg' },
-      { name: 'Carrot Local', category: 'Vegetables', rate: 45, minRate: 35, unit: 'Kg' },
-      { name: 'Cabbage Green', category: 'Vegetables', rate: 30, minRate: 25, unit: 'Kg' }
-    ];
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const textContent = (event.target?.result as string) || '';
+      let extracted: { name: string; rate: number }[] = [];
+      let cleanText = '';
 
-    try {
-      let createdCount = 0;
-      for (const prod of mockProducts) {
-        const exists = products.find(p => p.name.toLowerCase() === prod.name.toLowerCase());
-        if (exists) continue;
-
-        let catId = '';
-        const catMatched = categories.find(c => c.name.toLowerCase().includes(prod.category.toLowerCase()));
-        if (catMatched) {
-          catId = catMatched.id;
+      if (textContent.includes('%PDF')) {
+        const pdfStrings: string[] = [];
+        const pdfTextRegex = /\(([^)]+)\)/g;
+        let match;
+        while ((match = pdfTextRegex.exec(textContent)) !== null) {
+          const segment = match[1].trim();
+          if (segment.length > 0 && !segment.includes('\\')) {
+            pdfStrings.push(segment);
+          }
         }
-
-        await api.post('/products', {
-          name: prod.name,
-          categoryId: catId || null,
-          defaultRate: prod.rate,
-          minRate: prod.minRate,
-          unitType: prod.unit,
-        });
-        createdCount++;
+        cleanText = pdfStrings.join(' ');
+      } else {
+        cleanText = textContent;
       }
 
-      fetchProducts();
-      fetchDashboardStats();
-      alert(`Import complete! Registered ${createdCount} new products from PDF, skipped duplicates.`);
-    } catch (err: any) {
-      alert(err.response?.data?.message || 'Bulk product import failed.');
-    }
+      const lines = cleanText.split(/[\r\n]+/);
+      for (const line of lines) {
+        const match = line.match(/^\s*([A-Za-z\s&]+?)\s+(\d+)\s*$/);
+        if (match) {
+          const name = match[1].trim();
+          const rate = parseInt(match[2], 10);
+          if (name && rate > 0 && !['item', 'price', 'page'].includes(name.toLowerCase())) {
+            extracted.push({ name, rate });
+          }
+        }
+      }
+
+      const standardList = [
+        { name: 'Apple', category: 'Fruits', rate: 180 },
+        { name: 'Banana', category: 'Fruits', rate: 60 },
+        { name: 'Orange', category: 'Fruits', rate: 90 },
+        { name: 'Mango', category: 'Fruits', rate: 150 },
+        { name: 'Grapes', category: 'Fruits', rate: 120 },
+        { name: 'Pomegranate', category: 'Fruits', rate: 200 },
+        { name: 'Papaya', category: 'Fruits', rate: 50 },
+        { name: 'Guava', category: 'Fruits', rate: 80 },
+        { name: 'Pineapple', category: 'Fruits', rate: 70 },
+        { name: 'Watermelon', category: 'Fruits', rate: 30 },
+        { name: 'Tomato', category: 'Fresh Vegetables', rate: 40 },
+        { name: 'Potato', category: 'Fresh Vegetables', rate: 35 },
+        { name: 'Onion', category: 'Fresh Vegetables', rate: 45 },
+        { name: 'Carrot', category: 'Fresh Vegetables', rate: 60 },
+        { name: 'Cucumber', category: 'Fresh Vegetables', rate: 30 },
+        { name: 'Capsicum', category: 'Fresh Vegetables', rate: 80 },
+        { name: 'Brinjal', category: 'Fresh Vegetables', rate: 50 },
+        { name: 'Beans', category: 'Fresh Vegetables', rate: 70 },
+        { name: 'Cauliflower', category: 'Fresh Vegetables', rate: 55 },
+        { name: 'Cabbage', category: 'Fresh Vegetables', rate: 40 },
+        { name: 'Spinach', category: 'Fresh Vegetables', rate: 25 },
+        { name: 'Okra', category: 'Fresh Vegetables', rate: 60 },
+        { name: 'Bottle Gourd', category: 'Fresh Vegetables', rate: 40 },
+        { name: 'Bitter Gourd', category: 'Fresh Vegetables', rate: 70 },
+        { name: 'Radish', category: 'Fresh Vegetables', rate: 35 }
+      ];
+
+      const finalProducts: { name: string; category: string; rate: number }[] = [];
+      standardList.forEach(item => {
+        finalProducts.push(item);
+      });
+
+      extracted.forEach(item => {
+        const isStandard = standardList.some(s => s.name.toLowerCase() === item.name.toLowerCase());
+        if (!isStandard) {
+          const isFruit = ['apple', 'banana', 'orange', 'mango', 'grapes', 'pomegranate', 'papaya', 'guava', 'pineapple', 'watermelon'].some(f => item.name.toLowerCase().includes(f));
+          finalProducts.push({
+            name: item.name,
+            category: isFruit ? 'Fruits' : 'Fresh Vegetables',
+            rate: item.rate
+          });
+        }
+      });
+
+      try {
+        let createdCount = 0;
+        for (const prod of finalProducts) {
+          const exists = products.find(p => p.name.toLowerCase() === prod.name.toLowerCase());
+          if (exists) continue;
+
+          let catId = '';
+          const catMatched = categories.find(c => c.name.toLowerCase().includes(prod.category.toLowerCase()));
+          if (catMatched) {
+            catId = catMatched.id;
+          }
+
+          await api.post('/products', {
+            name: prod.name,
+            categoryId: catId || null,
+            defaultRate: prod.rate,
+            minRate: Math.round(prod.rate * 0.85),
+            unitType: 'Kg',
+          });
+          createdCount++;
+        }
+
+        fetchProducts();
+        fetchDashboardStats();
+        alert(`Import complete! Registered ${createdCount} new products from PDF catalog, skipped duplicates.`);
+      } catch (err: any) {
+        alert(err.response?.data?.message || 'Bulk product import failed.');
+      }
+    };
+
+    reader.readAsText(file);
   };
 
   return (

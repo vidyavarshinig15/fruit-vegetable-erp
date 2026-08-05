@@ -56,7 +56,7 @@ export const getProducts = async (req: AuthenticatedRequest, res: Response, next
       unitType: typeof unitType === 'string' ? unitType : undefined,
       isFavourite: isFavourite === 'true' ? true : isFavourite === 'false' ? false : undefined,
       page: page ? parseInt(page as string, 10) : 1,
-      limit: limit ? parseInt(limit as string, 10) : 100,
+      limit: limit ? parseInt(limit as string, 10) : 1000,
     };
 
     const result = await productRepository.findAllProducts(shopId, filters);

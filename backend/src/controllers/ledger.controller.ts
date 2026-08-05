@@ -156,8 +156,8 @@ export const recordManualAdjustment = async (req: AuthenticatedRequest, res: Res
       body: {
         shop_id: shopId,
         user_id: req.user?.id,
-        action: 'MANUAL_ADJUSTMENT',
-        details: `Recorded manual ledger adjustment of ₹${validated.amount} (${validated.type}) for customer ${customer.name}. Reason: ${validated.reason}`,
+        action_type: 'MANUAL_ADJUSTMENT',
+        description: `Recorded manual ledger adjustment of ₹${validated.amount} (${validated.type}) for customer ${customer.name}. Reason: ${validated.reason}`,
         created_at: new Date().toISOString(),
       }
     });

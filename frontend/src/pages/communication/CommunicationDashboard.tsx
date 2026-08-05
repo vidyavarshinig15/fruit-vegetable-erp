@@ -83,7 +83,7 @@ export const CommunicationDashboard: React.FC = () => {
       try {
         const [custRes, invRes, payRes, tempRes, configRes, histRes] = await Promise.all([
           api.get('/customers'),
-          api.get('/billing/invoices'),
+          api.get('/invoices'),
           api.get('/payments'),
           api.get('/communication/templates'),
           api.get('/communication/settings'),
