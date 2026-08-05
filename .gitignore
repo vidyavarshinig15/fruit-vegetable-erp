@@ -54,3 +54,4 @@ backend/src/logs/*
 /playwright/.cache/
 /playwright/.auth/
 .env
+.env
