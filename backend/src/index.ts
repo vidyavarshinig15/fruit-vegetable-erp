@@ -26,7 +26,9 @@ if (config.corsOrigin) {
 }
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.has(origin) || config.env === 'development') {
+    const isVercel = origin && (origin.endsWith('.vercel.app') || origin.includes('.vercel.app:'));
+    const isRender = origin && (origin.endsWith('.onrender.com') || origin.includes('.onrender.com:'));
+    if (!origin || allowedOrigins.has(origin) || isVercel || isRender || config.env === 'development') {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
