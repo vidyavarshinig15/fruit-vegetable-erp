@@ -10,6 +10,7 @@ import { extractShopContext } from './middlewares/shopContext.middleware.js';
 import { maintenanceModeMiddleware } from './middlewares/maintenance.middleware.js';
 
 import path from 'path';
+// Trigger fresh build with updated Vercel framework settings
 
 const app = express();
 
