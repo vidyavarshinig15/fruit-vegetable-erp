@@ -48,6 +48,15 @@ app.get('/health', (_req, res) => {
   });
 });
 
+// Alias the health endpoint under the API prefix so clients can call /api/v1/health
+app.get(`${config.apiPrefix}/health`, (_req, res) => {
+  res.json({
+    status: 'ok',
+    system: 'RAJU VEGETABLES AND FRUITS Billing System API',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 app.use(config.apiPrefix, routes);
 
 import { db } from './database/index.js';
