@@ -53,3 +53,4 @@ backend/src/logs/*
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+.env
