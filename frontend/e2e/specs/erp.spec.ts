@@ -18,7 +18,7 @@ test.describe('Fruits & Vegetables ERP Production Suite', () => {
     const loginPage = new LoginPage(page);
     await loginPage.goto();
     // Default admin seed credentials
-    await loginPage.login('vidyavarshini15@gmail.com', 'Admin@12345');
+    await loginPage.login('vidyavarshini15@gmail.com', 'Tanjiro@123');
     await loginPage.selectShop('RAJ FRUITS AND VEGETABLES');
   });
 
