@@ -19,11 +19,11 @@ export const BackupPage: React.FC = () => {
         </Button>
       </div>
 
-      <Card title="Database Storage Status" subtitle="Supabase automated snapshot status">
+      <Card title="Database Storage Status" subtitle="Automated cloud storage backup status">
         <div className="flex items-center gap-4 p-4 bg-slate-100 dark:bg-slate-800 rounded-xl">
           <Database className="w-8 h-8 text-market-700 dark:text-market-400" />
           <div>
-            <h4 className="font-bold text-slate-900 dark:text-white">Supabase Cloud Database Isolated Scope</h4>
+            <h4 className="font-bold text-slate-900 dark:text-white">Cloud Database Isolated Scope</h4>
             <p className="text-xs text-slate-500">Shop ID: {activeShop.id}</p>
           </div>
         </div>
