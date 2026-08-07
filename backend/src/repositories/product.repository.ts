@@ -173,41 +173,82 @@ class ProductRepository {
     }
     finalDescription = finalDescription.trim() || null;
 
-    const body = {
-      shop_id: shopId,
-      category_id: dto.categoryId || null,
-      name: dto.name,
-      code: dto.name.substring(0, 3).toUpperCase() + Math.floor(Math.random() * 1000), // Auto-code
-      unit_type: mappedUnit,
-      default_rate: dto.defaultRate,
-      min_rate: dto.minRate,
-      image_url: dto.imageUrl || null,
-      description: finalDescription,
-      status: 'active',
-      is_deleted: false,
-      created_by: userId || null,
-      updated_by: userId || null,
-    };
+    // Helper to perform single product insert
+    const insertForShop = async (targetShopId: ShopId, categoryName: string | null): Promise<any> => {
+      let categoryIdToUse: string | null = null;
+      if (categoryName) {
+        const catRows = await db.query(`categories?shop_id=eq.${targetShopId}&name=eq.${encodeURIComponent(categoryName)}&is_deleted=eq.false`);
+        if (catRows.length > 0) {
+          categoryIdToUse = catRows[0].id;
+        }
+      }
 
-    const rows = await db.query('products', { method: 'POST', body });
-    const product = mapDbToProduct(rows[0]);
-
-    // Initial Price History Record insertion
-    await db.query('price_history', {
-      method: 'POST',
-      body: {
-        shop_id: shopId,
-        product_id: product.id,
-        effective_date: new Date().toISOString().split('T')[0],
-        rate_per_unit: product.defaultRate,
-        unit_type: product.unitType,
-        remarks: 'Initial registered base price',
+      const body = {
+        shop_id: targetShopId,
+        category_id: categoryIdToUse,
+        name: dto.name,
+        code: dto.name.substring(0, 3).toUpperCase() + Math.floor(Math.random() * 1000), // Auto-code
+        unit_type: mappedUnit,
+        default_rate: dto.defaultRate,
+        min_rate: dto.minRate,
+        image_url: dto.imageUrl || null,
+        description: finalDescription,
+        status: 'active',
+        is_deleted: false,
         created_by: userId || null,
         updated_by: userId || null,
-      }
-    });
+      };
 
-    return product;
+      const rows = await db.query('products', { method: 'POST', body });
+      const createdProd = mapDbToProduct(rows[0]);
+
+      // Initial Price History Record
+      await db.query('price_history', {
+        method: 'POST',
+        body: {
+          shop_id: targetShopId,
+          product_id: createdProd.id,
+          effective_date: new Date().toISOString().split('T')[0],
+          rate_per_unit: createdProd.defaultRate,
+          unit_type: createdProd.unitType,
+          remarks: 'Initial registered base price',
+          created_by: userId || null,
+          updated_by: userId || null,
+        }
+      });
+      return createdProd;
+    };
+
+    // Find category name to match in other shops
+    let sourceCategoryName: string | null = null;
+    if (dto.categoryId) {
+      const sourceCat = await this.findCategoryById(dto.categoryId);
+      if (sourceCat) {
+        sourceCategoryName = sourceCat.name;
+      }
+    }
+
+    const primaryProduct = await insertForShop(shopId, sourceCategoryName);
+
+    // Replicate to all other shops
+    const otherShops: ShopId[] = [
+      '11111111-1111-1111-1111-111111111111' as ShopId,
+      '22222222-2222-2222-2222-222222222222' as ShopId,
+      '33333333-3333-3333-3333-333333333333' as ShopId
+    ].filter(sId => sId !== shopId);
+
+    for (const otherShopId of otherShops) {
+      try {
+        const dupCheck = await this.findProductByName(otherShopId, dto.name);
+        if (!dupCheck) {
+          await insertForShop(otherShopId, sourceCategoryName);
+        }
+      } catch (err) {
+        console.error(`Failed to replicate product to shop ${otherShopId}`, err);
+      }
+    }
+
+    return primaryProduct;
   }
 
   async updateProduct(id: string, dto: UpdateProductDTO, userId: string, userName: string): Promise<Product | null> {
@@ -233,60 +274,112 @@ class ProductRepository {
     }
     finalDescription = finalDescription.trim() || null;
 
-    const body: any = {
-      category_id: dto.categoryId !== undefined ? dto.categoryId : original.categoryId,
-      name: dto.name || original.name,
-      unit_type: mappedUnit,
-      default_rate: dto.defaultRate !== undefined ? dto.defaultRate : original.defaultRate,
-      min_rate: dto.minRate !== undefined ? dto.minRate : original.minRate,
-      image_url: dto.imageUrl !== undefined ? dto.imageUrl : original.imageUrl,
-      description: finalDescription,
-      status: dto.status || original.status,
-      updated_by: userId || null,
-      updated_at: new Date().toISOString(),
+    // Helper to update a product record
+    const updateForProduct = async (prodId: string, shopId: ShopId, origDefaultRate: number): Promise<Product> => {
+      let targetCategoryId = dto.categoryId;
+      // If categoryId is changing, try to map it by name to this shop's category
+      if (dto.categoryId && dto.categoryId !== original.categoryId) {
+        const newCat = await this.findCategoryById(dto.categoryId);
+        if (newCat) {
+          const mappedCatRows = await db.query(`categories?shop_id=eq.${shopId}&name=eq.${encodeURIComponent(newCat.name)}&is_deleted=eq.false`);
+          if (mappedCatRows.length > 0) {
+            targetCategoryId = mappedCatRows[0].id;
+          }
+        }
+      }
+
+      const body: any = {
+        category_id: targetCategoryId !== undefined ? targetCategoryId : undefined,
+        name: dto.name || undefined,
+        unit_type: mappedUnit,
+        default_rate: dto.defaultRate !== undefined ? dto.defaultRate : undefined,
+        min_rate: dto.minRate !== undefined ? dto.minRate : undefined,
+        image_url: dto.imageUrl !== undefined ? dto.imageUrl : undefined,
+        description: finalDescription,
+        status: dto.status || undefined,
+        updated_by: userId || null,
+        updated_at: new Date().toISOString(),
+      };
+
+      // Filter out undefined fields
+      Object.keys(body).forEach(key => body[key] === undefined && delete body[key]);
+
+      const rows = await db.query(`products?id=eq.${prodId}`, { method: 'PATCH', body });
+      const updated = mapDbToProduct(rows[0]);
+
+      // Check if price has changed! If yes, record price history log
+      if (dto.defaultRate !== undefined && dto.defaultRate !== origDefaultRate) {
+        await db.query('price_history', {
+          method: 'POST',
+          body: {
+            shop_id: shopId,
+            product_id: prodId,
+            effective_date: new Date().toISOString().split('T')[0],
+            rate_per_unit: dto.defaultRate,
+            unit_type: updated.unitType,
+            remarks: dto.notes || 'Product selling price update',
+            created_by: userId || null,
+            updated_by: userId || null,
+          }
+        });
+      }
+      return updated;
     };
 
-    const rows = await db.query(`products?id=eq.${id}`, { method: 'PATCH', body });
-    const updated = mapDbToProduct(rows[0]);
+    const updatedPrimary = await updateForProduct(id, original.shopId, original.defaultRate);
 
-    // Check if price has changed! If yes, record price history log
-    if (dto.defaultRate !== undefined && dto.defaultRate !== original.defaultRate) {
-      await db.query('price_history', {
-        method: 'POST',
-        body: {
-          shop_id: original.shopId,
-          product_id: id,
-          effective_date: new Date().toISOString().split('T')[0],
-          rate_per_unit: dto.defaultRate,
-          unit_type: updated.unitType,
-          remarks: dto.notes || 'Product selling price update',
-          created_by: userId || null,
-          updated_by: userId || null,
+    // Find and update matching products in other shops by original name
+    const allProducts = await db.query(`products?name=eq.${encodeURIComponent(original.name)}&is_deleted=eq.false`);
+    for (const pRow of allProducts) {
+      if (pRow.id !== id) {
+        try {
+          await updateForProduct(pRow.id, pRow.shop_id, Number(pRow.default_rate));
+        } catch (err) {
+          console.error(`Failed to replicate product update for product id ${pRow.id}`, err);
         }
-      });
+      }
     }
 
-    return updated;
+    return updatedPrimary;
   }
 
   async archiveProduct(id: string, userId: string): Promise<boolean> {
+    const original = await this.findProductById(id);
+    if (!original) return false;
+
     const body = {
       is_deleted: true,
       status: 'archived',
       deleted_at: new Date().toISOString(),
       deleted_by: userId || null,
     };
-    await db.query(`products?id=eq.${id}`, { method: 'PATCH', body });
+
+    // Find all products by original name across shops
+    const matchingProducts = await db.query(`products?name=eq.${encodeURIComponent(original.name)}&is_deleted=eq.false`);
+    for (const pRow of matchingProducts) {
+      await db.query(`products?id=eq.${pRow.id}`, { method: 'PATCH', body });
+    }
+
     return true;
   }
 
   async activateProduct(id: string, userId: string): Promise<boolean> {
+    const original = await db.query(`products?id=eq.${id}`);
+    if (original.length === 0) return false;
+    const name = original[0].name;
+
     const body = {
       status: 'active',
       updated_at: new Date().toISOString(),
       updated_by: userId || null,
     };
-    await db.query(`products?id=eq.${id}`, { method: 'PATCH', body });
+
+    // Find all matching name products across shops (even soft-deleted ones)
+    const matchingProducts = await db.query(`products?name=eq.${encodeURIComponent(name)}`);
+    for (const pRow of matchingProducts) {
+      await db.query(`products?id=eq.${pRow.id}`, { method: 'PATCH', body });
+    }
+
     return true;
   }
 

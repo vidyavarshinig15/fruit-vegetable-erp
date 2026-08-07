@@ -313,8 +313,10 @@ class CustomerRepository {
     const duplicateName = await this.findByName(shopId, dto.name);
     if (duplicateName) throw new Error('DUPLICATE_BUSINESS_NAME');
 
-    const duplicateMobile = await this.findByMobile(shopId, dto.mobileNumber);
-    if (duplicateMobile) throw new Error('DUPLICATE_MOBILE_NUMBER');
+    if (dto.mobileNumber) {
+      const duplicateMobile = await this.findByMobile(shopId, dto.mobileNumber);
+      if (duplicateMobile) throw new Error('DUPLICATE_MOBILE_NUMBER');
+    }
 
     if (dto.whatsappNumber) {
       const duplicateWA = await this.findByWhatsApp(shopId, dto.whatsappNumber);
@@ -333,12 +335,12 @@ class CustomerRepository {
         shop_id: shopId,
         customer_code: customerCode,
         name: dto.name,
-        mobile_number: dto.mobileNumber,
+        mobile_number: dto.mobileNumber || '9000000000',
         alternate_mobile: dto.alternateMobile || null,
         email: dto.email || null,
-        address: dto.address,
+        address: dto.address || 'APMC Yard',
         city: dto.city || 'Bengaluru',
-        pincode: dto.pincode,
+        pincode: dto.pincode || '560022',
         credit_limit: dto.creditLimit ?? 0,
         opening_balance: dto.openingBalance ?? 0,
         current_balance: dto.openingBalance ?? 0,
@@ -348,13 +350,26 @@ class CustomerRepository {
     });
 
     const record: Customer = {
-      ...dto,
       id,
       shopId,
       customerCode,
+      name: dto.name,
+      ownerName: dto.ownerName || dto.name,
+      contactPerson: dto.contactPerson || dto.name,
+      mobileNumber: dto.mobileNumber || '9000000000',
+      alternateMobile: dto.alternateMobile || null,
+      whatsappNumber: dto.whatsappNumber || null,
+      email: dto.email || null,
+      address: dto.address || 'APMC Yard',
+      area: dto.area || 'APMC Yard',
+      city: dto.city || 'Bengaluru',
+      state: dto.state || 'Karnataka',
+      pincode: dto.pincode || '560022',
+      businessType: dto.businessType || 'Other',
       openingBalance: dto.openingBalance ?? 0,
       currentOutstanding: dto.openingBalance ?? 0, // initially outstanding is opening balance
       creditLimit: dto.creditLimit ?? 0,
+      paymentTerms: dto.paymentTerms || 'Weekly Payment',
       status: 'active',
       tags: dto.tags || ['New Customer'],
       customerSince: now,

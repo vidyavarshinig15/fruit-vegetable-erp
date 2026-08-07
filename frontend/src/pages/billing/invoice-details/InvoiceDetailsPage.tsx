@@ -234,23 +234,23 @@ export const InvoiceDetailsPage: React.FC = () => {
       <div id="print-area" className="bg-white text-slate-950 p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-lg">
         {printFormat === 'A4' ? (
           /* A4 STANDARD WHOLESALE INVOICE FORMAT */
-          <div className="space-y-6 font-sans">
+          <div className="space-y-6 font-sans text-base">
             {/* Branding Shop Header */}
             <div className="flex justify-between items-start border-b-2 border-slate-250 pb-5">
               <div>
-                <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tight">{activeShop.name}</h2>
-                <p className="text-xs font-bold text-slate-550 mt-1 uppercase max-w-[320px] leading-relaxed">
+                <h2 className="text-3xl font-black text-slate-900 uppercase tracking-tight">{activeShop.name}</h2>
+                <p className="text-sm font-bold text-slate-650 mt-1.5 uppercase max-w-[350px] leading-relaxed">
                   {activeShop.address}, {activeShop.city}, {activeShop.state} - {activeShop.pincode}
                 </p>
-                <p className="text-xs font-bold text-slate-550 mt-1">
+                <p className="text-sm font-bold text-slate-650 mt-1">
                   Owner: {activeShop.ownerName} | Phone: {activeShop.mobileNumber}
                 </p>
               </div>
 
               <div className="text-right">
-                <h3 className="text-xl font-black text-slate-900 tracking-wider">TAX INVOICE</h3>
-                <span className="block text-xs font-black text-slate-450 mt-1">NET WHOLESALE BILL</span>
-                <div className="mt-4 space-y-1 text-xs text-slate-600 font-bold">
+                <h3 className="text-2xl font-black text-slate-900 tracking-wider">TAX INVOICE</h3>
+                <span className="block text-sm font-black text-slate-500 mt-1">NET WHOLESALE BILL</span>
+                <div className="mt-4 space-y-1.5 text-sm text-slate-700 font-bold">
                   <div>Bill No: <span className="font-extrabold text-slate-900">{invoice.invoiceNumber}</span></div>
                   <div>Date: <span className="font-extrabold text-slate-900">{new Date(invoice.invoiceDate).toLocaleDateString()}</span></div>
                   {invoice.dueDate && (
@@ -261,50 +261,50 @@ export const InvoiceDetailsPage: React.FC = () => {
             </div>
 
             {/* Customer Details Block */}
-            <div className="grid grid-cols-2 gap-6 bg-slate-50 p-5 rounded-2xl border border-slate-150">
+            <div className="grid grid-cols-2 gap-6 bg-slate-50 p-5 rounded-2xl border border-slate-150 text-sm">
               <div>
-                <span className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Billed To</span>
-                <span className="block text-base font-extrabold text-slate-900 mt-1">{customer?.name || 'Loading Customer...'}</span>
-                <span className="block text-xs text-slate-500 mt-0.5">Owner: {customer?.ownerName}</span>
-                <span className="block text-xs text-slate-500 mt-0.5">Mobile: {customer?.mobileNumber}</span>
+                <span className="block text-xs font-black uppercase text-slate-500 tracking-wider">Billed To</span>
+                <span className="block text-lg font-black text-slate-900 mt-1">{customer?.name || 'Loading Customer...'}</span>
+                <span className="block text-sm text-slate-600 mt-1">Owner: {customer?.ownerName}</span>
+                <span className="block text-sm text-slate-600 mt-1">Mobile: {customer?.mobileNumber}</span>
               </div>
               <div>
-                <span className="block text-[10px] font-black uppercase text-slate-400 tracking-wider">Delivery Location</span>
-                <span className="block text-xs text-slate-800 font-bold mt-1 leading-snug">
+                <span className="block text-xs font-black uppercase text-slate-500 tracking-wider">Delivery Location</span>
+                <span className="block text-sm text-slate-800 font-extrabold mt-1.5 leading-relaxed">
                   {customer?.address}, {customer?.area}, {customer?.city}, {customer?.state} - {customer?.pincode}
                 </span>
               </div>
             </div>
 
             {/* Line Items Table */}
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="w-full text-left text-base border-collapse">
               <thead>
-                <tr className="border-b-2 border-slate-300 text-xs font-black text-slate-700 uppercase tracking-wider bg-slate-100/50">
-                  <th className="py-2.5 px-3 w-[60px] text-center">Sl No</th>
-                  <th className="py-2.5 px-3">Item Description</th>
-                  <th className="py-2.5 px-3 w-[80px] text-center">Unit</th>
-                  <th className="py-2.5 px-3 text-right w-[120px]">Quantity</th>
-                  <th className="py-2.5 px-3 text-right w-[120px]">Rate (₹)</th>
-                  <th className="py-2.5 px-3 text-right w-[140px]">Total Amount (₹)</th>
+                <tr className="border-b-2 border-slate-300 text-sm font-black text-slate-850 uppercase tracking-wider bg-slate-100/50">
+                  <th className="py-3 px-3 w-[60px] text-center">Sl No</th>
+                  <th className="py-3 px-3">Item Description</th>
+                  <th className="py-3 px-3 w-[100px] text-center">Unit</th>
+                  <th className="py-3 px-3 text-right w-[130px]">Quantity</th>
+                  <th className="py-3 px-3 text-right w-[130px]">Rate (₹)</th>
+                  <th className="py-3 px-3 text-right w-[150px]">Total Amount (₹)</th>
                 </tr>
               </thead>
               <tbody>
                 {invoice.items?.map((item: any, idx: number) => (
-                  <tr key={item.id} className="border-b border-slate-150 text-slate-850 font-semibold">
-                    <td className="py-3 px-3 text-center text-slate-450">{idx + 1}</td>
-                    <td className="py-3 px-3 font-extrabold text-slate-900 uppercase">{item.productName}</td>
-                    <td className="py-3 px-3 text-center"><Badge variant="info">{item.unitType}</Badge></td>
-                    <td className="py-3 px-3 text-right font-bold">{Number(item.quantity).toFixed(2)}</td>
-                    <td className="py-3 px-3 text-right font-bold">{formatCurrency(item.unitPrice).replace('₹', '')}</td>
-                    <td className="py-3 px-3 text-right font-black text-slate-900">{formatCurrency(item.totalPrice).replace('₹', '')}</td>
+                  <tr key={item.id} className="border-b border-slate-150 text-slate-900 font-extrabold text-base">
+                    <td className="py-3.5 px-3 text-center text-slate-500">{idx + 1}</td>
+                    <td className="py-3.5 px-3 uppercase text-slate-950 font-black">{item.productName}</td>
+                    <td className="py-3.5 px-3 text-center"><Badge variant="info" className="text-xs font-bold py-1 px-2.5">{item.unitType}</Badge></td>
+                    <td className="py-3.5 px-3 text-right font-black">{Number(item.quantity).toFixed(2)}</td>
+                    <td className="py-3.5 px-3 text-right font-black">{formatCurrency(item.unitPrice).replace('₹', '')}</td>
+                    <td className="py-3.5 px-3 text-right font-black text-emerald-950">{formatCurrency(item.totalPrice).replace('₹', '')}</td>
                   </tr>
                 ))}
                 
                 {/* Net wholesale totals */}
-                <tr className="font-black text-slate-900 text-base">
-                  <td colSpan={4} className="py-4"></td>
-                  <td className="py-4 text-right pr-4 uppercase tracking-wider text-xs font-black text-slate-400">Total Net Amount</td>
-                  <td className="py-4 text-right border-t-2 border-double border-slate-350 text-xl font-black text-market-900">
+                <tr className="font-black text-slate-950 text-lg">
+                  <td colSpan={4} className="py-5"></td>
+                  <td className="py-5 text-right pr-4 uppercase tracking-wider text-xs font-black text-slate-500">Total Net Amount</td>
+                  <td className="py-5 text-right border-t-2 border-double border-slate-350 text-2xl font-black text-market-900">
                     {formatCurrency(invoice.totalAmount)}
                   </td>
                 </tr>
@@ -386,32 +386,31 @@ export const InvoiceDetailsPage: React.FC = () => {
 
             {/* The 2-Column Grid */}
             {(() => {
-              const numRows = Math.max(40, Math.ceil(products.length / 2));
+              const invoiceItems = invoice.items || [];
+              const numRows = Math.ceil(invoiceItems.length / 2);
               const leftCols = [];
               const rightCols = [];
 
               for (let i = 0; i < numRows; i++) {
                 // Left column item
-                const leftProd = products[i] || null;
-                const leftMatched = leftProd ? invoice.items?.find((item: any) => item.productId === leftProd.id) : null;
+                const leftItem = invoiceItems[i] || null;
                 leftCols.push({
                   slNo: i + 1,
-                  name: leftProd ? leftProd.name : '-',
-                  unitType: leftProd ? leftProd.unitType : 'Kg',
-                  quantity: leftMatched ? Number(leftMatched.quantity) : null,
-                  amount: leftMatched ? Number(leftMatched.totalPrice) : null,
+                  name: leftItem ? leftItem.productName : '-',
+                  unitType: leftItem ? leftItem.unitType : '',
+                  quantity: leftItem ? Number(leftItem.quantity) : null,
+                  amount: leftItem ? Number(leftItem.totalPrice) : null,
                 });
 
                 // Right column item
                 const rightIdx = i + numRows;
-                const rightProd = products[rightIdx] || null;
-                const rightMatched = rightProd ? invoice.items?.find((item: any) => item.productId === rightProd.id) : null;
+                const rightItem = invoiceItems[rightIdx] || null;
                 rightCols.push({
                   slNo: rightIdx + 1,
-                  name: rightProd ? rightProd.name : '-',
-                  unitType: rightProd ? rightProd.unitType : 'Kg',
-                  quantity: rightMatched ? Number(rightMatched.quantity) : null,
-                  amount: rightMatched ? Number(rightMatched.totalPrice) : null,
+                  name: rightItem ? rightItem.productName : '-',
+                  unitType: rightItem ? rightItem.unitType : '',
+                  quantity: rightItem ? Number(rightItem.quantity) : null,
+                  amount: rightItem ? Number(rightItem.totalPrice) : null,
                 });
               }
 
@@ -422,89 +421,89 @@ export const InvoiceDetailsPage: React.FC = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     {/* Left Column Table */}
-                    <table className="w-full border-collapse border border-emerald-800 text-[10px]">
+                    <table className="w-full border-collapse border border-emerald-800 text-xs font-bold">
                       <thead>
-                        <tr className="bg-emerald-800 text-white font-bold uppercase text-center">
-                          <th className="border border-emerald-850 py-0.5 px-1 w-[35px]">Sl No</th>
-                          <th className="border border-emerald-850 py-0.5 px-1 text-left">Items</th>
-                          <th className="border border-emerald-850 py-0.5 px-1 w-[80px]">Quantity</th>
-                          <th className="border border-emerald-850 py-0.5 px-1 w-[70px]">Amount</th>
+                        <tr className="bg-emerald-800 text-white uppercase text-center text-sm font-black">
+                          <th className="border border-emerald-850 py-1.5 px-2 w-[40px]">Sl</th>
+                          <th className="border border-emerald-850 py-1.5 px-2 text-left">Items</th>
+                          <th className="border border-emerald-850 py-1.5 px-2 w-[90px]">Qty</th>
+                          <th className="border border-emerald-850 py-1.5 px-2 w-[85px]">Amount</th>
                         </tr>
                       </thead>
                       <tbody>
                         {leftCols.map((item) => (
                           <tr key={item.slNo} className="hover:bg-slate-50 border-b border-slate-200">
-                            <td className="border border-emerald-850 text-center py-0.5 font-bold text-slate-500">{item.slNo}</td>
-                            <td className="border border-emerald-850 px-1 py-0.5 font-black uppercase text-slate-800 truncate max-w-[130px]">{item.name}</td>
-                            <td className="border border-emerald-850 text-center py-0.5 font-bold text-emerald-900">
-                              {item.quantity !== null ? `${item.quantity.toFixed(2)} ${item.unitType}` : item.unitType}
+                            <td className="border border-emerald-850 text-center py-1 font-bold text-slate-500">{item.slNo}</td>
+                            <td className="border border-emerald-850 px-2 py-1 font-black uppercase text-slate-900 truncate max-w-[130px]">{item.name}</td>
+                            <td className="border border-emerald-850 text-center py-1 font-extrabold text-emerald-950">
+                              {item.quantity !== null ? `${item.quantity.toFixed(2)} ${item.unitType}` : ''}
                             </td>
-                            <td className="border border-emerald-850 text-right pr-1 py-0.5 font-black text-slate-900">
-                              {item.amount !== null ? `₹ ${item.amount.toFixed(2)}` : '₹ -'}
+                            <td className="border border-emerald-850 text-right pr-2 py-1 font-black text-slate-950">
+                              {item.amount !== null ? `₹ ${item.amount.toFixed(2)}` : ''}
                             </td>
                           </tr>
                         ))}
                         {/* Total-1 row */}
-                        <tr className="bg-emerald-50 font-black text-emerald-900">
-                          <td colSpan={3} className="border border-emerald-850 text-right pr-2 py-1 uppercase tracking-wider text-[9px]">Total-1</td>
-                          <td className="border border-emerald-850 text-right pr-1 py-1 font-black">₹ {total1.toFixed(2)}</td>
+                        <tr className="bg-emerald-50 font-black text-emerald-950 text-sm">
+                          <td colSpan={3} className="border border-emerald-850 text-right pr-2 py-1.5 uppercase tracking-wider text-xs">Total-1</td>
+                          <td className="border border-emerald-850 text-right pr-2 py-1.5 font-black">₹ {total1.toFixed(2)}</td>
                         </tr>
                       </tbody>
                     </table>
 
                     {/* Right Column Table */}
-                    <table className="w-full border-collapse border border-emerald-800 text-[10px]">
+                    <table className="w-full border-collapse border border-emerald-800 text-xs font-bold">
                       <thead>
-                        <tr className="bg-emerald-800 text-white font-bold uppercase text-center">
-                          <th className="border border-emerald-850 py-0.5 px-1 w-[35px]">Sl No</th>
-                          <th className="border border-emerald-850 py-0.5 px-1 text-left">Items</th>
-                          <th className="border border-emerald-850 py-0.5 px-1 w-[80px]">Quantity</th>
-                          <th className="border border-emerald-850 py-0.5 px-1 w-[70px]">Amount</th>
+                        <tr className="bg-emerald-800 text-white uppercase text-center text-sm font-black">
+                          <th className="border border-emerald-850 py-1.5 px-2 w-[40px]">Sl</th>
+                          <th className="border border-emerald-850 py-1.5 px-2 text-left">Items</th>
+                          <th className="border border-emerald-850 py-1.5 px-2 w-[90px]">Qty</th>
+                          <th className="border border-emerald-850 py-1.5 px-2 w-[85px]">Amount</th>
                         </tr>
                       </thead>
                       <tbody>
                         {rightCols.map((item) => (
                           <tr key={item.slNo} className="hover:bg-slate-50 border-b border-slate-200">
-                            <td className="border border-emerald-850 text-center py-0.5 font-bold text-slate-500">{item.slNo}</td>
-                            <td className="border border-emerald-850 px-1 py-0.5 font-black uppercase text-slate-800 truncate max-w-[130px]">{item.name}</td>
-                            <td className="border border-emerald-850 text-center py-0.5 font-bold text-emerald-900">
-                              {item.quantity !== null ? `${item.quantity.toFixed(2)} ${item.unitType}` : item.unitType}
+                            <td className="border border-emerald-850 text-center py-1 font-bold text-slate-500">{item.slNo}</td>
+                            <td className="border border-emerald-850 px-2 py-1 font-black uppercase text-slate-900 truncate max-w-[130px]">{item.name}</td>
+                            <td className="border border-emerald-850 text-center py-1 font-extrabold text-emerald-950">
+                              {item.quantity !== null ? `${item.quantity.toFixed(2)} ${item.unitType}` : ''}
                             </td>
-                            <td className="border border-emerald-850 text-right pr-1 py-0.5 font-black text-slate-900">
-                              {item.amount !== null ? `₹ ${item.amount.toFixed(2)}` : '₹ -'}
+                            <td className="border border-emerald-850 text-right pr-2 py-1 font-black text-slate-950">
+                              {item.amount !== null ? `₹ ${item.amount.toFixed(2)}` : ''}
                             </td>
                           </tr>
                         ))}
                         {/* Total-2 row */}
-                        <tr className="bg-emerald-50 font-black text-emerald-900">
-                          <td colSpan={3} className="border border-emerald-850 text-right pr-2 py-1 uppercase tracking-wider text-[9px]">Total-2</td>
-                          <td className="border border-emerald-850 text-right pr-1 py-1 font-black">₹ {total2.toFixed(2)}</td>
+                        <tr className="bg-emerald-50 font-black text-emerald-950 text-sm">
+                          <td colSpan={3} className="border border-emerald-850 text-right pr-2 py-1.5 uppercase tracking-wider text-xs">Total-2</td>
+                          <td className="border border-emerald-850 text-right pr-2 py-1.5 font-black">₹ {total2.toFixed(2)}</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
 
                   {/* Summary Grid Footer */}
-                  <table className="w-full border-collapse border border-emerald-800 text-xs mt-4">
+                  <table className="w-full border-collapse border border-emerald-800 text-sm font-black mt-4">
                     <tbody>
                       <tr className="border border-emerald-800 font-black">
-                        <td className="border border-emerald-800 p-2 w-[40%] text-center uppercase tracking-wide">
-                          <span className="block text-[9px] font-bold text-slate-500 uppercase">Grand Total (Total-1 + Total-2)</span>
-                          <span className="text-xl font-black text-red-700 mt-1 block">₹ {invoice.totalAmount.toLocaleString()}</span>
+                        <td className="border border-emerald-800 p-2.5 w-[50%] text-center uppercase tracking-wide">
+                          <span className="block text-xs font-bold text-slate-500 uppercase">Grand Total (Total-1 + Total-2)</span>
+                          <span className="text-2xl font-black text-red-700 mt-1 block">₹ {invoice.totalAmount.toLocaleString()}</span>
                         </td>
-                        <td className="border border-emerald-800 p-2 text-center uppercase tracking-wide text-emerald-900">
+                        <td className="border border-emerald-800 p-2.5 text-center uppercase tracking-wide text-emerald-950 text-base">
                           For {activeShop.name}
                         </td>
                       </tr>
-                      <tr className="border border-emerald-800 font-bold">
-                        <td className="border border-emerald-800 p-2 text-center">
-                          <span className="block text-[9px] font-bold text-slate-500 uppercase">Amount in Words</span>
-                          <span className="text-[10px] font-black text-red-700 italic block mt-1">
+                      <tr className="border border-emerald-800 font-black">
+                        <td className="border border-emerald-800 p-2.5 text-center">
+                          <span className="block text-xs font-bold text-slate-500 uppercase">Amount in Words</span>
+                          <span className="text-xs font-black text-red-700 italic block mt-1">
                             {numberToWords(invoice.totalAmount)}
                           </span>
                         </td>
-                        <td className="border border-emerald-800 p-2 text-center valign-bottom pt-8">
-                          <span className="border-t border-slate-400 pt-1 text-[10px] uppercase font-bold text-slate-600 block">Signature</span>
+                        <td className="border border-emerald-800 p-2.5 text-center valign-bottom pt-10">
+                          <span className="border-t border-slate-400 pt-1 text-xs uppercase font-bold text-slate-650 block">Signature</span>
                         </td>
                       </tr>
                     </tbody>

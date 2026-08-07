@@ -85,21 +85,21 @@ export interface Customer {
 
 export interface CreateCustomerDTO {
   name: string;
-  ownerName: string;
-  contactPerson: string;
-  mobileNumber: string;
+  ownerName?: string;
+  contactPerson?: string;
+  mobileNumber?: string | null;
   alternateMobile?: string | null;
   whatsappNumber?: string | null;
   email?: string | null;
-  address: string;
-  area: string;
-  city: string;
-  state: string;
-  pincode: string;
-  businessType: BusinessType;
+  address?: string;
+  area?: string;
+  city?: string;
+  state?: string;
+  pincode?: string | null;
+  businessType?: BusinessType;
   openingBalance?: number;
   creditLimit?: number;
-  paymentTerms: string;
+  paymentTerms?: string;
   tags?: string[];
   notes?: string | null;
 }

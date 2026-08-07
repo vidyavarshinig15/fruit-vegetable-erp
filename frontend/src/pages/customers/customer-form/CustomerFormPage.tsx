@@ -131,16 +131,8 @@ export const CustomerFormPage: React.FC = () => {
     const pinRegex = /^\d{6}$/;
 
     if (!name.trim()) errors.name = 'Business name is required';
-    if (!ownerName.trim()) errors.ownerName = 'Owner name is required';
-    if (!contactPerson.trim()) errors.contactPerson = 'Contact person name is required';
-    if (!address.trim()) errors.address = 'Business address is required';
-    if (!area.trim()) errors.area = 'Area location is required';
-    if (!city.trim()) errors.city = 'City name is required';
-    if (!state.trim()) errors.state = 'State name is required';
 
-    if (!mobileNumber) {
-      errors.mobileNumber = 'Primary mobile number is required';
-    } else if (!phoneRegex.test(mobileNumber)) {
+    if (mobileNumber && !phoneRegex.test(mobileNumber)) {
       errors.mobileNumber = 'Invalid Indian mobile number (10 digits starting with 6-9)';
     }
 
@@ -156,9 +148,7 @@ export const CustomerFormPage: React.FC = () => {
       errors.email = 'Invalid email address format';
     }
 
-    if (!pincode) {
-      errors.pincode = 'Pincode is required';
-    } else if (!pinRegex.test(pincode)) {
+    if (pincode && !pinRegex.test(pincode)) {
       errors.pincode = 'Pincode must be exactly 6 digits';
     }
 
@@ -257,28 +247,25 @@ export const CustomerFormPage: React.FC = () => {
         <Card title="Business profile details" subtitle="Corporate entity names and tags.">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              label="Business Trade Name *"
-              required
+              label="Business Trade Name"
               value={name}
               onChange={(e) => setName(e.target.value)}
               error={formErrors.name}
             />
             <Input
-              label="Business Owner Name *"
-              required
+              label="Business Owner Name"
               value={ownerName}
               onChange={(e) => setOwnerName(e.target.value)}
               error={formErrors.ownerName}
             />
             <Input
-              label="Primary Contact Person *"
-              required
+              label="Primary Contact Person"
               value={contactPerson}
               onChange={(e) => setContactPerson(e.target.value)}
               error={formErrors.contactPerson}
             />
             <Select
-              label="Primary Business Type *"
+              label="Primary Business Type"
               value={businessType}
               onChange={(e) => setBusinessType(e.target.value)}
               options={businessTypeOptions}
@@ -290,8 +277,7 @@ export const CustomerFormPage: React.FC = () => {
         <Card title="Contact Information" subtitle="Mobile, WhatsApp numbers, and email accounts.">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
-              label="Primary Mobile Number *"
-              required
+              label="Primary Mobile Number"
               placeholder="10 digit Indian number"
               value={mobileNumber}
               onChange={(e) => setMobileNumber(e.target.value)}
@@ -329,38 +315,33 @@ export const CustomerFormPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="md:col-span-2">
               <Input
-                label="Delivery Address *"
-                required
+                label="Delivery Address"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
                 error={formErrors.address}
               />
             </div>
             <Input
-              label="Market Area / Locality *"
-              required
+              label="Market Area / Locality"
               placeholder="e.g. Yeshwanthpur"
               value={area}
               onChange={(e) => setArea(e.target.value)}
               error={formErrors.area}
             />
             <Input
-              label="City *"
-              required
+              label="City"
               value={city}
               onChange={(e) => setCity(e.target.value)}
               error={formErrors.city}
             />
             <Input
-              label="State *"
-              required
+              label="State"
               value={state}
               onChange={(e) => setState(e.target.value)}
               error={formErrors.state}
             />
             <Input
-              label="Pincode *"
-              required
+              label="Pincode"
               placeholder="6 digits Indian code"
               value={pincode}
               onChange={(e) => setPincode(e.target.value)}
@@ -373,23 +354,21 @@ export const CustomerFormPage: React.FC = () => {
         <Card title="Ledger Balances & Credit Terms" subtitle="Opening balances and credit thresholds.">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Input
-              label="Opening Outstanding (₹) *"
+              label="Opening Outstanding (₹)"
               type="number"
-              required
               disabled={isEdit}
               helperText="Cannot change after customer creation"
               value={openingBalance}
               onChange={(e) => setOpeningBalance(Number(e.target.value))}
             />
             <Input
-              label="Approved Credit Limit (₹) *"
+              label="Approved Credit Limit (₹)"
               type="number"
-              required
               value={creditLimit}
               onChange={(e) => setCreditLimit(Number(e.target.value))}
             />
             <Select
-              label="Payment Terms *"
+              label="Payment Terms"
               value={paymentTerms}
               onChange={(e) => setPaymentTerms(e.target.value)}
               options={[

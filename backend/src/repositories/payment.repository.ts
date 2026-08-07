@@ -156,7 +156,7 @@ class PaymentRepository {
 
     const paymentId = insertedPayment.id;
 
-    // Handle invoice balance adjustment if invoiceId is linked
+    // Handle invoice balance adjustment if invoiceId is linked, otherwise allocate dynamically
     let balanceRemaining = 0.00;
     if (dto.invoiceId) {
       const invoiceRows = await db.query(`invoices?id=eq.${dto.invoiceId}`);
@@ -181,6 +181,37 @@ class PaymentRepository {
           },
         });
       }
+    } else {
+      // General Deposit allocation: find all UNPAID/PARTIALLY_PAID invoices for this customer
+      const invoices = await db.query(`invoices?customer_id=eq.${dto.customerId}&is_deleted=eq.false`);
+      const unpaid = invoices
+        .filter((inv: any) => inv.billStatus !== 'CANCELLED' && (inv.paymentStatus === 'UNPAID' || inv.paymentStatus === 'PARTIALLY_PAID'))
+        .sort((a: any, b: any) => new Date(a.invoiceDate).getTime() - new Date(b.invoiceDate).getTime());
+
+      let unallocated = dto.amount;
+      for (const inv of unpaid) {
+        if (unallocated <= 0) break;
+        const balance = Number(inv.balance_amount);
+        const allocated = Math.min(balance, unallocated);
+        const newPaid = Number(inv.paid_amount) + allocated;
+        const newBalance = balance - allocated;
+        const newStatus = newBalance <= 0 ? 'PAID' : 'PARTIALLY_PAID';
+
+        await db.query(`invoices?id=eq.${inv.id}`, {
+          method: 'PATCH',
+          body: {
+            paid_amount: newPaid,
+            balance_amount: newBalance,
+            payment_status: newStatus,
+            updated_by: userId,
+            notes: (inv.notes || '') + ` [AUTO-ALLOCATED ₹${allocated} from Payment ${paymentNum}]`,
+          },
+        });
+
+        // Store allocation log in payment notes
+        unallocated -= allocated;
+      }
+      balanceRemaining = unallocated;
     }
 
     // Insert payment receipt directly into db
@@ -252,7 +283,7 @@ class PaymentRepository {
       }
     });
 
-    // 2. Revert Invoice balances if linked
+    // 2. Revert Invoice balances if linked, otherwise revert auto-allocated general deposit amounts
     if (payment.invoiceId) {
       const invoiceRows = await db.query(`invoices?id=eq.${payment.invoiceId}`);
       if (invoiceRows.length > 0) {
@@ -271,6 +302,42 @@ class PaymentRepository {
             updated_at: new Date().toISOString(),
           }
         });
+      }
+    } else {
+      // General Deposit cancellation: revert starting from the newest paid/partially paid invoices matching payment reference tag in notes
+      const invoices = await db.query(`invoices?customer_id=eq.${payment.customerId}&is_deleted=eq.false`);
+      const paidList = invoices
+        .filter((inv: any) => inv.notes && inv.notes.includes(`from Payment ${payment.paymentNumber}`))
+        .sort((a: any, b: any) => new Date(b.invoiceDate).getTime() - new Date(a.invoiceDate).getTime());
+
+      let amountToRevert = payment.amount;
+      for (const inv of paidList) {
+        if (amountToRevert <= 0) break;
+        // Parse the allocated amount from the notes match tag
+        const match = inv.notes.match(new RegExp(`\\[AUTO-ALLOCATED ₹([\\d\\.]+) from Payment ${payment.paymentNumber}\\]`));
+        if (match) {
+          const allocated = Number(match[1]);
+          const revertAmount = Math.min(allocated, amountToRevert);
+          const newPaid = Math.max(0, Number(inv.paid_amount) - revertAmount);
+          const newBalance = Number(inv.balance_amount) + revertAmount;
+          const newStatus = newPaid === 0 ? 'UNPAID' : 'PARTIALLY_PAID';
+          
+          // Strip out the auto-allocation note
+          const cleanNotes = inv.notes.replace(` [AUTO-ALLOCATED ₹${allocated} from Payment ${payment.paymentNumber}]`, '');
+
+          await db.query(`invoices?id=eq.${inv.id}`, {
+            method: 'PATCH',
+            body: {
+              paid_amount: newPaid,
+              balance_amount: newBalance,
+              payment_status: newStatus,
+              notes: cleanNotes,
+              updated_by: userId || null,
+              updated_at: new Date().toISOString(),
+            }
+          });
+          amountToRevert -= revertAmount;
+        }
       }
     }
 
