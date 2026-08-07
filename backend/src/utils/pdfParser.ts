@@ -4,9 +4,10 @@ const pdf = require('pdf-parse');
 
 export async function parsePdfContent(fileBuffer: Buffer): Promise<{ productName: string; quantity: number; unitType: string }[]> {
   const extractedItems: { productName: string; quantity: number; unitType: string }[] = [];
+  const parser = new pdf.PDFParse({ data: fileBuffer });
   try {
-    const data = await pdf(fileBuffer);
-    const text = data.text || '';
+    const textResult = await parser.getText();
+    const text = textResult.text || '';
     const lines = text.split('\n');
 
     for (let line of lines) {
@@ -48,6 +49,10 @@ export async function parsePdfContent(fileBuffer: Buffer): Promise<{ productName
     }
   } catch (error) {
     console.error('Error parsing PDF content using pdf-parse:', error);
+  } finally {
+    try {
+      await parser.destroy();
+    } catch (e) {}
   }
   return extractedItems;
 }
