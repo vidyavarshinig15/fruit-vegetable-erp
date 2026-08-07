@@ -8,8 +8,8 @@ import { ShopId, UserRole } from '@raju-billing/shared';
 import { z } from 'zod';
 import fs from 'fs';
 import path from 'path';
-import { execSync } from 'child_process';
 import { db } from '../database/index.js';
+import { parsePdfContent } from '../utils/pdfParser.js';
 
 // Helper to validate active shop context access
 const validateShopContext = (req: AuthenticatedRequest, res: Response): ShopId | null => {
@@ -290,14 +290,7 @@ export const scanOrderDocument = async (req: AuthenticatedRequest, res: Response
     if (!shopId) return;
 
     const validated = scanOrderSchema.parse(req.body);
-
-    const tempDir = path.resolve(process.cwd(), 'uploads', 'temp');
-    fs.mkdirSync(tempDir, { recursive: true });
-    const tempPath = path.resolve(tempDir, `${Date.now()}-${validated.fileName}`);
-    
     const buffer = Buffer.from(validated.fileData, 'base64');
-    fs.writeFileSync(tempPath, buffer);
-
     const productsRes = await db.query(`products?shop_id=eq.${shopId}&status=eq.active&is_deleted=eq.false`);
 
     let rawExtracted: any[] = [];
@@ -305,22 +298,15 @@ export const scanOrderDocument = async (req: AuthenticatedRequest, res: Response
 
     if (validated.fileType === 'application/pdf') {
       try {
-        const pythonPath = '/Users/vidyavarshini/miniconda3/bin/python';
-        const scriptPath = '/Users/vidyavarshini/.gemini/antigravity-ide/brain/fb836f0b-5a9b-4089-abc6-33fb305de04b/scratch/parse_pdf.py';
-        const output = execSync(`"${pythonPath}" "${scriptPath}" "${tempPath}"`, { encoding: 'utf-8' });
-        const parseRes = JSON.parse(output);
-        if (parseRes.success && parseRes.items && parseRes.items.length > 0) {
-          rawExtracted = parseRes.items;
+        const extracted = await parsePdfContent(buffer);
+        if (extracted.length > 0) {
+          rawExtracted = extracted;
           parsedSuccess = true;
         }
       } catch (e) {
-        console.error('Failed to scan PDF using python:', e);
+        console.error('Failed to scan PDF using pdf-parse:', e);
       }
     }
-
-    try {
-      fs.unlinkSync(tempPath);
-    } catch (e) {}
 
     if (!parsedSuccess) {
       rawExtracted = orderRepository.simulateOcrExtraction(validated.fileName, productsRes);

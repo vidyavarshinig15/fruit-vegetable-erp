@@ -2,6 +2,7 @@ import { ShopId, UploadedOrder, OcrItem, OrderStatus, OrderFilterQuery, OcrConfi
 import { db } from '../database/index.js';
 import fs from 'fs';
 import path from 'path';
+import { parsePdfContent } from '../utils/pdfParser.js';
 
 // Helper to map Postgres SQL fields to Typescript camelCase fields
 export const mapDbToOrder = (dbRow: any, createdByName = 'System'): UploadedOrder => {
@@ -104,127 +105,194 @@ class OrderRepository {
     if (customerId) {
       try {
         const pastOrders = await db.query(`customer_uploaded_orders?customer_id=eq.${customerId}&is_deleted=eq.false`);
-      for (const order of pastOrders) {
-        if (order.ocr_status === 'VERIFIED' || order.ocr_status === 'INVOICE_GENERATED') {
-          if (order.ocr_raw_text) {
-            const parsed = JSON.parse(order.ocr_raw_text);
-            const itemsList = parsed.items || [];
-            for (const item of itemsList) {
-              if (item.matchedProductId) {
-                confirmedProductIds.add(item.matchedProductId);
-                frequencyMap.set(item.matchedProductId, (frequencyMap.get(item.matchedProductId) || 0) + 1);
+        for (const order of pastOrders) {
+          if (order.ocr_status === 'VERIFIED' || order.ocr_status === 'INVOICE_GENERATED') {
+            if (order.ocr_raw_text) {
+              const parsed = JSON.parse(order.ocr_raw_text);
+              const itemsList = parsed.items || [];
+              for (const item of itemsList) {
+                if (item.matchedProductId) {
+                  confirmedProductIds.add(item.matchedProductId);
+                  frequencyMap.set(item.matchedProductId, (frequencyMap.get(item.matchedProductId) || 0) + 1);
+                }
               }
             }
           }
         }
+      } catch (err) {
+        console.error('Failed to load customer previous match frequencies', err);
       }
-    } catch (err) {
-      console.error('Failed to load customer previous match frequencies', err);
-    }
     }
 
     return rawItems.map((raw) => {
-      const queryName = raw.productName.toLowerCase().trim();
-
-      // Normalize common suffix strings
-      const cleanedQuery = queryName
-        .replace(/\b(kg|g|grams|piece|pcs|dozen|box|crate|bag|bundle|packet|tray|local|hybrid|fresh)\b/g, '')
+      const rawNameClean = raw.productName.toLowerCase().trim();
+      const ignoredWords = ['pdf', 'order', 'invoice', 'bill', 'fruits', 'vegetables', 'list', 'doc', 'client', 'customer', 'upload', 'file', 'local', 'hybrid', 'fresh', 'kg', 'g', 'grams', 'piece', 'pcs', 'dozen', 'box', 'crate', 'bag', 'bundle', 'packet', 'tray', 'leafy', 'leaf'];
+      
+      // Clean suffix/prefix and formatting characters
+      const cleanedQuery = rawNameClean
+        .replace(/[^a-zA-Z0-9\s]/g, ' ')
+        .replace(/\b(kg|g|grams|piece|pcs|dozen|box|crate|bag|bundle|packet|tray|local|hybrid|fresh)\b/gi, '')
+        .replace(/\s+/g, ' ')
         .trim();
 
-      // Look for candidates
-      const exactMatches = catalog.filter((p) => p.name === cleanedQuery || p.name === queryName);
-      const partialMatches = catalog.filter(
-        (p) => p.name.includes(cleanedQuery) || cleanedQuery.includes(p.name)
-      );
-
-      const ignoredWords = ['pdf', 'order', 'invoice', 'bill', 'fruits', 'vegetables', 'list', 'doc', 'client', 'customer', 'upload', 'file', 'local', 'hybrid', 'fresh', 'kg', 'g', 'grams', 'piece', 'pcs', 'dozen', 'box', 'crate', 'bag', 'bundle', 'packet', 'tray'];
-      const queryTokens = cleanedQuery.split(/[\s_\-]+/).filter((w: string) => w.length >= 3 && !ignoredWords.includes(w));
-      const tokenMatches = catalog.filter((p) => {
-        const prodTokens = p.name.split(/[\s_\-]+/).filter((w: string) => w.length >= 3);
-        return queryTokens.some((qt: string) => prodTokens.some((pt: string) => pt.includes(qt) || qt.includes(pt)));
-      });
-
-      const candidates = exactMatches.length > 0 
-        ? exactMatches 
-        : (partialMatches.length > 0 ? partialMatches : tokenMatches);
-
-      let suggestion: any = null;
-
-      if (candidates.length !== 1) {
-        // Run Levenshtein distance against active products of the shop
-        let bestDistance = Infinity;
-        let bestCandidate: any = null;
-
-        for (const prod of catalog) {
-          const dist = this.getLevenshteinDistance(cleanedQuery, prod.name);
-          if (dist < bestDistance) {
-            bestDistance = dist;
-            bestCandidate = prod;
-          }
-        }
-
-        // Suggest if distance is small (<= 2 edits)
-        if (bestDistance <= 2 && bestCandidate) {
-          const isPreviouslyOrdered = confirmedProductIds.has(bestCandidate.id);
-          suggestion = {
-            matchedProductId: bestCandidate.id,
-            productName: bestCandidate.originalName,
-            confidence: (isPreviouslyOrdered ? 'High' : 'Medium') as OcrConfidence,
-            reason: isPreviouslyOrdered 
-              ? 'Previously ordered & Similar name' 
-              : 'Similar product name',
-          };
-        } else if (confirmedProductIds.size > 0) {
-          // Fallback to customer's top ordered product from previous history
-          const topOrdered = [...frequencyMap.entries()]
-            .sort((a, b) => b[1] - a[1])
-            .map(([id]) => catalog.find((p) => p.id === id))
-            .filter((p): p is any => !!p);
-
-          if (topOrdered.length > 0) {
-            suggestion = {
-              matchedProductId: topOrdered[0].id,
-              productName: topOrdered[0].originalName,
-              confidence: 'Low' as OcrConfidence,
-              reason: 'Previously ordered by this customer',
-            };
-          }
-        }
-      }
-
-      if (candidates.length === 1) {
+      // 1. Exact Match Check
+      const exactMatch = catalog.find((p) => p.name === cleanedQuery || p.name === rawNameClean);
+      if (exactMatch) {
         return {
           productName: raw.productName,
           quantity: raw.quantity,
-          unitType: raw.unitType || candidates[0].unitType,
-          matchedProductId: candidates[0].id,
+          unitType: raw.unitType || exactMatch.unitType,
+          matchedProductId: exactMatch.id,
           confidence: 'High' as OcrConfidence,
           status: 'Matched' as const,
           suggestion: null,
         };
-      } else if (candidates.length > 1) {
-        // Conflict matches
+      }
+
+      // 2. Exact word tokens comparison (e.g. "Chilli Green" matching "Green Chilli")
+      const queryTokens = cleanedQuery.split(' ').filter((t: string) => t.length >= 2 && !ignoredWords.includes(t));
+      
+      let bestTokenMatch: any = null;
+      let maxSharedTokens = 0;
+
+      for (const prod of catalog) {
+        const prodTokens = prod.name.replace(/[^a-zA-Z0-9\s]/g, ' ').split(' ').filter((t: string) => t.length >= 2 && !ignoredWords.includes(t));
+        const shared = queryTokens.filter((t: string) => prodTokens.includes(t)).length;
+        if (shared > maxSharedTokens) {
+          maxSharedTokens = shared;
+          bestTokenMatch = prod;
+        }
+      }
+
+      if (bestTokenMatch && maxSharedTokens > 0 && maxSharedTokens === queryTokens.length) {
         return {
           productName: raw.productName,
           quantity: raw.quantity,
-          unitType: raw.unitType || candidates[0].unitType,
-          matchedProductId: candidates[0].id, // Default to first candidate
-          confidence: 'Medium' as OcrConfidence,
-          status: 'Conflict' as const,
-          suggestion,
-        };
-      } else {
-        // Unmatched matches
-        return {
-          productName: raw.productName,
-          quantity: raw.quantity,
-          unitType: raw.unitType || 'Kg',
-          matchedProductId: null,
-          confidence: 'Low' as OcrConfidence,
-          status: 'Unmatched' as const,
-          suggestion,
+          unitType: raw.unitType || bestTokenMatch.unitType,
+          matchedProductId: bestTokenMatch.id,
+          confidence: 'High' as OcrConfidence,
+          status: 'Matched' as const,
+          suggestion: null,
         };
       }
+
+      // 3. Substring match (e.g., "Tomato Hybrid" containing "Tomato")
+      const substringMatches = catalog.filter((p) => p.name.includes(cleanedQuery) || cleanedQuery.includes(p.name));
+      if (substringMatches.length === 1) {
+        return {
+          productName: raw.productName,
+          quantity: raw.quantity,
+          unitType: raw.unitType || substringMatches[0].unitType,
+          matchedProductId: substringMatches[0].id,
+          confidence: 'High' as OcrConfidence,
+          status: 'Matched' as const,
+          suggestion: null,
+        };
+      } else if (substringMatches.length > 1) {
+        return {
+          productName: raw.productName,
+          quantity: raw.quantity,
+          unitType: raw.unitType || substringMatches[0].unitType,
+          matchedProductId: substringMatches[0].id,
+          confidence: 'Medium' as OcrConfidence,
+          status: 'Conflict' as const,
+          suggestion: {
+            matchedProductId: substringMatches[0].id,
+            productName: substringMatches[0].originalName,
+            confidence: 'Medium' as OcrConfidence,
+            reason: 'Multiple partial name matches found',
+          }
+        };
+      }
+
+      // 4. Fuzzy Levenshtein Match
+      let bestDistance = Infinity;
+      let bestCandidate: any = null;
+
+      for (const prod of catalog) {
+        const dist = this.getLevenshteinDistance(cleanedQuery, prod.name);
+        if (dist < bestDistance) {
+          bestDistance = dist;
+          bestCandidate = prod;
+        }
+      }
+
+      const allowedDistance = cleanedQuery.length > 6 ? 4 : 2;
+      if (bestDistance <= allowedDistance && bestCandidate) {
+        const isPreviouslyOrdered = confirmedProductIds.has(bestCandidate.id);
+        const suggestionItem = {
+          matchedProductId: bestCandidate.id,
+          productName: bestCandidate.originalName,
+          confidence: (isPreviouslyOrdered ? 'High' : 'Medium') as OcrConfidence,
+          reason: isPreviouslyOrdered 
+            ? 'Previously ordered & Similar name' 
+            : 'Fuzzy match spelling check',
+        };
+        return {
+          productName: raw.productName,
+          quantity: raw.quantity,
+          unitType: raw.unitType || bestCandidate.unitType,
+          matchedProductId: bestCandidate.id,
+          confidence: 'Medium' as OcrConfidence,
+          status: 'Conflict' as const,
+          suggestion: suggestionItem,
+        };
+      }
+
+      // 5. Shared Token fallback (any shared token is better than nothing)
+      if (bestTokenMatch && maxSharedTokens > 0) {
+        const isPrev = confirmedProductIds.has(bestTokenMatch.id);
+        return {
+          productName: raw.productName,
+          quantity: raw.quantity,
+          unitType: raw.unitType || bestTokenMatch.unitType,
+          matchedProductId: bestTokenMatch.id,
+          confidence: 'Medium' as OcrConfidence,
+          status: 'Conflict' as const,
+          suggestion: {
+            matchedProductId: bestTokenMatch.id,
+            productName: bestTokenMatch.originalName,
+            confidence: (isPrev ? 'High' : 'Medium') as OcrConfidence,
+            reason: 'Partially matching keywords',
+          }
+        };
+      }
+
+      // 6. Previously ordered fallback
+      if (confirmedProductIds.size > 0) {
+        const topOrdered = [...frequencyMap.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .map(([id]) => catalog.find((p) => p.id === id))
+          .filter((p): p is any => !!p);
+
+        if (topOrdered.length > 0) {
+          return {
+            productName: raw.productName,
+            quantity: raw.quantity,
+            unitType: raw.unitType || 'Kg',
+            matchedProductId: null,
+            confidence: 'Low' as OcrConfidence,
+            status: 'Unmatched' as const,
+            suggestion: {
+              matchedProductId: topOrdered[0].id,
+              productName: topOrdered[0].originalName,
+              confidence: 'Low' as OcrConfidence,
+              reason: 'Customer past order frequency fallback',
+            }
+          };
+        }
+      }
+
+      // 7. Totally Unmatched
+      return {
+        productName: raw.productName,
+        quantity: raw.quantity,
+        unitType: raw.unitType || 'Kg',
+        matchedProductId: null,
+        confidence: 'Low' as OcrConfidence,
+        status: 'Unmatched' as const,
+        suggestion: null,
+      };
     });
   }
 
@@ -283,17 +351,13 @@ class OrderRepository {
 
     if (fileType === 'application/pdf') {
       try {
-        const pythonPath = '/Users/vidyavarshini/miniconda3/bin/python';
-        const scriptPath = '/Users/vidyavarshini/.gemini/antigravity-ide/brain/fb836f0b-5a9b-4089-abc6-33fb305de04b/scratch/parse_pdf.py';
-        const { execSync } = await import('child_process');
-        const output = execSync(`"${pythonPath}" "${scriptPath}" "${absolutePath}"`, { encoding: 'utf-8' });
-        const res = JSON.parse(output);
-        if (res.success && res.items && res.items.length > 0) {
-          rawExtracted = res.items;
+        const extracted = await parsePdfContent(buffer);
+        if (extracted.length > 0) {
+          rawExtracted = extracted;
           parsedSuccess = true;
         }
       } catch (e) {
-        console.error('Failed to parse PDF using python script:', e);
+        console.error('Failed to parse PDF using pdf-parse:', e);
       }
     }
 
