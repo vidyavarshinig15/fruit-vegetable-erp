@@ -160,9 +160,7 @@ class CustomerRepository {
   private customers: Map<string, Customer> = new Map();
 
   constructor() {
-    SEED_CUSTOMERS.forEach((c) => {
-      this.customers.set(c.id, { ...c });
-    });
+    // Start with empty cache, populated purely from DB records
   }
 
   private generateNextCustomerCode(shopId: ShopId): string {
@@ -182,6 +180,8 @@ class CustomerRepository {
   private async syncFromDb(): Promise<void> {
     try {
       const rows = await db.query('customers');
+      const syncedCustomers = new Map<string, Customer>();
+
       for (const row of rows) {
         const id = row.id;
         const existing = this.customers.get(id);
@@ -217,8 +217,9 @@ class CustomerRepository {
           contactHistory: existing?.contactHistory || [],
           activities: existing?.activities || [],
         };
-        this.customers.set(id, mapped);
+        syncedCustomers.set(id, mapped);
       }
+      this.customers = syncedCustomers;
     } catch (err) {
       console.error('Failed to sync customers from DB:', err);
     }
