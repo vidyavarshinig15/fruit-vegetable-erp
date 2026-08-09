@@ -1,5 +1,3 @@
-import { createWorker } from 'tesseract.js';
-
 export function parseTextOrderLines(text: string): { productName: string; quantity: number; unitType: string }[] {
   const extractedItems: { productName: string; quantity: number; unitType: string }[] = [];
   const lines = text.split('\n');
@@ -40,6 +38,7 @@ export function parseTextOrderLines(text: string): { productName: string; quanti
 
 export async function parseImageOcr(fileBuffer: Buffer): Promise<{ productName: string; quantity: number; unitType: string }[]> {
   try {
+    const { createWorker } = await import('tesseract.js');
     const worker = await createWorker('eng');
     const ret = await worker.recognize(fileBuffer);
     await worker.terminate();

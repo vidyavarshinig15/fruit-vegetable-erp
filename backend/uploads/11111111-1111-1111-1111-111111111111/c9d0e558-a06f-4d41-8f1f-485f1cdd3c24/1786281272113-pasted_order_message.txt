@@ -1,0 +1,4 @@
+Pineapple=4 pcs
+Water melon=4 pcs
+Maskmelon=3 pcs
+Papaya=2 pcs

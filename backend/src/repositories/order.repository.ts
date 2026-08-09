@@ -334,15 +334,18 @@ class OrderRepository {
       throw new Error('DUPLICATE_ORDER_UPLOAD');
     }
 
-    // 2. Write file to local isolated directories
-    const uploadsDir = path.resolve(process.cwd(), 'uploads', shopId, customerId);
-    fs.mkdirSync(uploadsDir, { recursive: true });
-
+    // 2. Write file to local isolated directories (resilient to read-only serverless filesystems like Vercel)
     const relativePath = path.join('uploads', shopId, customerId, `${Date.now()}-${fileName}`);
-    const absolutePath = path.resolve(process.cwd(), relativePath);
-    
     const buffer = Buffer.from(fileData, 'base64');
-    fs.writeFileSync(absolutePath, buffer);
+
+    try {
+      const uploadsDir = path.resolve(process.cwd(), 'uploads', shopId, customerId);
+      fs.mkdirSync(uploadsDir, { recursive: true });
+      const absolutePath = path.resolve(process.cwd(), relativePath);
+      fs.writeFileSync(absolutePath, buffer);
+    } catch (fsError) {
+      console.warn('Filesystem write skipped/failed (likely running in a read-only environment like Vercel):', fsError);
+    }
 
     // 3. OCR extraction & catalog similarity matching
     const productsRes = await db.query(`products?shop_id=eq.${shopId}&status=eq.active&is_deleted=eq.false`);
