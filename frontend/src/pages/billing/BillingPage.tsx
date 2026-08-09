@@ -263,6 +263,26 @@ export const BillingPage: React.FC = () => {
     setEntryPrice(0);
   };
 
+  // Update Item Quantity/Price Inline
+  const handleUpdateItem = (prodId: string, qty: number, price: number) => {
+    (window as any).unsavedChanges = true;
+    setItems((prev) =>
+      prev.map((item) => {
+        if (item.productId === prodId) {
+          const newQty = qty <= 0 ? 0.01 : qty;
+          const newPrice = price <= 0 ? 0.01 : price;
+          return {
+            ...item,
+            quantity: newQty,
+            unitPrice: newPrice,
+            totalPrice: newQty * newPrice,
+          };
+        }
+        return item;
+      })
+    );
+  };
+
   // Remove Item
   const handleRemoveItem = (prodId: string) => {
     setItems((prev) => prev.filter((item) => item.productId !== prodId));
@@ -513,8 +533,27 @@ export const BillingPage: React.FC = () => {
                         <td className="py-3 text-slate-450">{idx + 1}</td>
                         <td className="py-3 uppercase text-slate-900 dark:text-white font-extrabold">{item.productName}</td>
                         <td className="py-3 text-center"><Badge variant="info">{item.unitType}</Badge></td>
-                        <td className="py-3 text-right">{item.quantity.toFixed(2)}</td>
-                        <td className="py-3 text-right">{formatCurrency(item.unitPrice).replace('₹', '')}</td>
+                        <td className="py-1 text-right">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            className="w-24 px-2 py-1 text-right bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-market-700"
+                            value={item.quantity}
+                            onChange={(e) => handleUpdateItem(item.productId, Number(e.target.value), item.unitPrice)}
+                          />
+                        </td>
+                        <td className="py-1 text-right">
+                          <input
+                            type="number"
+                            step="0.01"
+                            min="0.01"
+                            disabled={!canOverridePrice}
+                            className="w-24 px-2 py-1 text-right bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-market-700 disabled:bg-slate-100/50 disabled:text-slate-400 disabled:cursor-not-allowed"
+                            value={item.unitPrice}
+                            onChange={(e) => handleUpdateItem(item.productId, item.quantity, Number(e.target.value))}
+                          />
+                        </td>
                         <td className="py-3 text-right font-black text-slate-900 dark:text-white">
                           {formatCurrency(item.totalPrice).replace('₹', '')}
                         </td>

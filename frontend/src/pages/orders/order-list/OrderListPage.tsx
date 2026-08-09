@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { Select } from '@/components/ui/Select';
 import { EmptyState } from '@/components/common/EmptyState';
 import { useShop } from '@/contexts/ShopContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -38,6 +39,74 @@ export const OrderListPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Upload states integrated directly
+  const [customerId, setCustomerId] = useState('');
+  const [dragOver, setDragOver] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  const validateAndSetFile = (file: File) => {
+    setErrorMsg(null);
+    setSuccessMsg(null);
+
+    const allowedExtensions = ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'];
+    if (!allowedExtensions.includes(file.type)) {
+      setErrorMsg('Invalid format: Only PDF documents and PNG/JPEG/WEBP orders are supported.');
+      setSelectedFile(null);
+      return;
+    }
+
+    if (file.size > 20 * 1024 * 1024) {
+      setErrorMsg('Size limit exceeded: Order file exceeds the maximum 20MB limit.');
+      setSelectedFile(null);
+      return;
+    }
+
+    setSelectedFile(file);
+    setSuccessMsg(`Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const base64String = (reader.result as string).split(',')[1];
+        resolve(base64String);
+      };
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleUploadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customerId || !selectedFile) return;
+
+    setIsProcessing(true);
+    setErrorMsg(null);
+    try {
+      const base64Data = await fileToBase64(selectedFile);
+      
+      const payload = {
+        customerId,
+        fileName: selectedFile.name,
+        fileType: selectedFile.type,
+        fileSizeBytes: selectedFile.size,
+        fileData: base64Data,
+      };
+
+      const res = await api.post('/orders', payload);
+      if (res.data?.success && res.data?.data) {
+        navigate(`/orders/${res.data.data.id}/verify`);
+      }
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.message || 'Ingestion upload failed.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   // Fetch Customers mapping list
   const fetchCustomers = useCallback(async () => {
@@ -163,6 +232,76 @@ export const OrderListPage: React.FC = () => {
           </Card>
         ))}
       </div>
+
+      {successMsg && (
+        <div className="p-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-emerald-700 dark:text-emerald-400 font-bold text-sm">
+          <span>{successMsg}</span>
+        </div>
+      )}
+
+      {isProcessing ? (
+        <div className="p-8 text-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl space-y-4 shadow-sm flex flex-col justify-center items-center">
+          <UploadCloud className="w-12 h-12 text-market-700 dark:text-market-400 animate-bounce" />
+          <h3 className="text-lg font-black text-slate-900 dark:text-white uppercase tracking-wider">OCR Ingestion & Match Processing</h3>
+          <p className="text-xs font-bold text-slate-450 max-w-[325px]">
+            Reading document streams, matching items to active catalog rates...
+          </p>
+        </div>
+      ) : (
+        <Card title="Direct Ingest Order PDF/Image" subtitle="Upload and match item listings instantly.">
+          <form onSubmit={handleUploadSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex flex-col justify-between">
+              <Select
+                label="Select Wholesale Customer *"
+                required
+                value={customerId}
+                onChange={(e) => setCustomerId(e.target.value)}
+                options={[
+                  { value: '', label: 'Select Buyer Account' },
+                  ...customers.filter(c => c.status === 'active').map((c) => ({ value: c.id, label: `${c.customerCode} - ${c.name}` })),
+                ]}
+              />
+              <div className="pt-4 flex justify-start">
+                <Button type="submit" variant="primary" disabled={!customerId || !selectedFile} className="w-full md:w-auto">
+                  <UploadCloud className="w-4 h-4 mr-2" /> Upload & Process Order
+                </Button>
+              </div>
+            </div>
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                const file = e.dataTransfer.files?.[0];
+                if (file) validateAndSetFile(file);
+              }}
+              className={`border-4 border-dashed rounded-2xl p-6 text-center transition-all flex flex-col justify-center items-center cursor-pointer ${
+                dragOver
+                  ? 'border-market-700 bg-market-50/20'
+                  : 'border-slate-250 dark:border-slate-800 bg-slate-50/50 hover:bg-slate-50'
+              }`}
+              onClick={() => document.getElementById('direct-file-input')?.click()}
+            >
+              <input
+                id="direct-file-input"
+                type="file"
+                accept="application/pdf,image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) validateAndSetFile(file);
+                }}
+              />
+              <UploadCloud className="w-8 h-8 text-slate-400 mb-2" />
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                {selectedFile ? selectedFile.name : 'Drag Order PDF/Image Here or Click'}
+              </span>
+              <span className="text-[10px] text-slate-400 mt-1 uppercase block">PDF / PNG / JPEG (max 20MB)</span>
+            </div>
+          </form>
+        </Card>
+      )}
 
       {/* Directory Queue Table */}
       {isLoading ? (

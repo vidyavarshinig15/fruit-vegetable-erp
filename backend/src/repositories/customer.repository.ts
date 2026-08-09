@@ -190,16 +190,16 @@ class CustomerRepository {
           shopId: row.shop_id,
           customerCode: row.customer_code,
           name: row.name,
-          ownerName: existing?.ownerName || row.name,
-          contactPerson: existing?.contactPerson || row.name,
-          mobileNumber: row.mobile_number,
+          ownerName: existing?.ownerName || '',
+          contactPerson: existing?.contactPerson || '',
+          mobileNumber: row.mobile_number || '',
           alternateMobile: row.alternate_mobile || undefined,
-          whatsappNumber: existing?.whatsappNumber || row.mobile_number,
+          whatsappNumber: existing?.whatsappNumber || '',
           email: row.email || undefined,
           address: row.address || '',
-          area: existing?.area || 'APMC Yard',
-          city: row.city || 'Bengaluru',
-          state: existing?.state || 'Karnataka',
+          area: existing?.area || '',
+          city: row.city || '',
+          state: existing?.state || '',
           pincode: row.pincode || '',
           businessType: existing?.businessType || 'Other',
           openingBalance: Number(row.opening_balance || 0),
@@ -336,12 +336,12 @@ class CustomerRepository {
         shop_id: shopId,
         customer_code: customerCode,
         name: dto.name,
-        mobile_number: dto.mobileNumber || '9000000000',
+        mobile_number: dto.mobileNumber || '',
         alternate_mobile: dto.alternateMobile || null,
         email: dto.email || null,
-        address: dto.address || 'APMC Yard',
-        city: dto.city || 'Bengaluru',
-        pincode: dto.pincode || '560022',
+        address: dto.address || '',
+        city: dto.city || '',
+        pincode: dto.pincode || '',
         credit_limit: dto.creditLimit ?? 0,
         opening_balance: dto.openingBalance ?? 0,
         current_balance: dto.openingBalance ?? 0,
@@ -355,17 +355,17 @@ class CustomerRepository {
       shopId,
       customerCode,
       name: dto.name,
-      ownerName: dto.ownerName || dto.name,
-      contactPerson: dto.contactPerson || dto.name,
-      mobileNumber: dto.mobileNumber || '9000000000',
+      ownerName: dto.ownerName || '',
+      contactPerson: dto.contactPerson || '',
+      mobileNumber: dto.mobileNumber || '',
       alternateMobile: dto.alternateMobile || null,
       whatsappNumber: dto.whatsappNumber || null,
       email: dto.email || null,
-      address: dto.address || 'APMC Yard',
-      area: dto.area || 'APMC Yard',
-      city: dto.city || 'Bengaluru',
-      state: dto.state || 'Karnataka',
-      pincode: dto.pincode || '560022',
+      address: dto.address || '',
+      area: dto.area || '',
+      city: dto.city || '',
+      state: dto.state || '',
+      pincode: dto.pincode || '',
       businessType: dto.businessType || 'Other',
       openingBalance: dto.openingBalance ?? 0,
       currentOutstanding: dto.openingBalance ?? 0,
@@ -392,85 +392,6 @@ class CustomerRepository {
     };
 
     this.customers.set(id, record);
-
-    // Replicate Customer to all other shops with 0 opening balance/outstanding
-    const otherShops = [
-      ShopId.RAJ_FRUITS_AND_VEGETABLES,
-      ShopId.G_R_FRUITS_AND_VEGETABLES,
-      ShopId.PRIYAKRISHNA_FRUITS_AND_VEGETABLES
-    ].filter((sId) => sId !== shopId);
-
-    for (const otherShopId of otherShops) {
-      const existingInOther = await this.findByName(otherShopId, dto.name);
-      if (!existingInOther) {
-        const otherId = crypto.randomUUID();
-        const otherCustomerCode = this.generateNextCustomerCode(otherShopId);
-
-        await db.query('customers', {
-          method: 'POST',
-          body: {
-            id: otherId,
-            shop_id: otherShopId,
-            customer_code: otherCustomerCode,
-            name: dto.name,
-            mobile_number: dto.mobileNumber || '9000000000',
-            alternate_mobile: dto.alternateMobile || null,
-            email: dto.email || null,
-            address: dto.address || 'APMC Yard',
-            city: dto.city || 'Bengaluru',
-            pincode: dto.pincode || '560022',
-            credit_limit: dto.creditLimit ?? 0,
-            opening_balance: 0, // Isolated opening balance
-            current_balance: 0, // Isolated current balance
-            notes: dto.notes || '',
-            status: 'active',
-          }
-        });
-
-        const otherRecord: Customer = {
-          id: otherId,
-          shopId: otherShopId,
-          customerCode: otherCustomerCode,
-          name: dto.name,
-          ownerName: dto.ownerName || dto.name,
-          contactPerson: dto.contactPerson || dto.name,
-          mobileNumber: dto.mobileNumber || '9000000000',
-          alternateMobile: dto.alternateMobile || null,
-          whatsappNumber: dto.whatsappNumber || null,
-          email: dto.email || null,
-          address: dto.address || 'APMC Yard',
-          area: dto.area || 'APMC Yard',
-          city: dto.city || 'Bengaluru',
-          state: dto.state || 'Karnataka',
-          pincode: dto.pincode || '560022',
-          businessType: dto.businessType || 'Other',
-          openingBalance: 0,
-          currentOutstanding: 0,
-          creditLimit: dto.creditLimit ?? 0,
-          paymentTerms: dto.paymentTerms || 'Weekly Payment',
-          status: 'active',
-          tags: dto.tags || ['New Customer'],
-          customerSince: now,
-          createdAt: now,
-          updatedAt: now,
-          notesList: [],
-          documents: [],
-          contactHistory: [],
-          activities: [
-            {
-              id: `act_${Date.now()}`,
-              customerId: otherId,
-              action: 'Customer Created',
-              details: `Replicated profile registered under code ${otherCustomerCode}.`,
-              timestamp: now,
-              userName,
-            }
-          ]
-        };
-
-        this.customers.set(otherId, otherRecord);
-      }
-    }
 
     return { ...record };
   }
@@ -542,43 +463,6 @@ class CustomerRepository {
     await db.query(`customers?id=eq.${id}`, { method: 'PATCH', body });
     this.customers.set(id, updatedRecord);
 
-    // Replicate Update to matching customers in other shops
-    const otherShops = [
-      ShopId.RAJ_FRUITS_AND_VEGETABLES,
-      ShopId.G_R_FRUITS_AND_VEGETABLES,
-      ShopId.PRIYAKRISHNA_FRUITS_AND_VEGETABLES
-    ].filter((sId) => sId !== shopId);
-
-    for (const otherShopId of otherShops) {
-      const match = await this.findByName(otherShopId, record.name);
-      if (match) {
-        const otherBody: any = {};
-        if (dto.name !== undefined) otherBody.name = dto.name;
-        if (dto.mobileNumber !== undefined) otherBody.mobile_number = dto.mobileNumber;
-        if (dto.alternateMobile !== undefined) otherBody.alternate_mobile = dto.alternateMobile || null;
-        if (dto.email !== undefined) otherBody.email = dto.email || null;
-        if (dto.address !== undefined) otherBody.address = dto.address;
-        if (dto.city !== undefined) otherBody.city = dto.city;
-        if (dto.pincode !== undefined) otherBody.pincode = dto.pincode;
-        if (dto.creditLimit !== undefined) otherBody.credit_limit = dto.creditLimit;
-        if (dto.status !== undefined) otherBody.status = dto.status;
-        otherBody.updated_at = now;
-
-        await db.query(`customers?id=eq.${match.id}`, { method: 'PATCH', body: otherBody });
-
-        const currentCached = this.customers.get(match.id);
-        if (currentCached) {
-          const updatedCached: Customer = {
-            ...currentCached,
-            ...dto,
-            tags: dto.tags || currentCached.tags,
-            updatedAt: now,
-          };
-          this.customers.set(match.id, updatedCached);
-        }
-      }
-    }
-
     return { ...updatedRecord };
   }
 
@@ -613,33 +497,6 @@ class CustomerRepository {
     
     this.customers.set(id, record);
 
-    // Replicate Archiving to other shops
-    const otherShops = [
-      ShopId.RAJ_FRUITS_AND_VEGETABLES,
-      ShopId.G_R_FRUITS_AND_VEGETABLES,
-      ShopId.PRIYAKRISHNA_FRUITS_AND_VEGETABLES
-    ].filter((sId) => sId !== record.shopId);
-
-    for (const otherShopId of otherShops) {
-      const match = await this.findByName(otherShopId, record.name);
-      if (match) {
-        await db.query(`customers?id=eq.${match.id}`, {
-          method: 'PATCH',
-          body: {
-            status: 'archived',
-            is_deleted: true,
-            deleted_at: now,
-          }
-        });
-        const currentCached = this.customers.get(match.id);
-        if (currentCached) {
-          currentCached.status = 'archived';
-          currentCached.updatedAt = now;
-          this.customers.set(match.id, currentCached);
-        }
-      }
-    }
-
     return true;
   }
 
@@ -672,32 +529,6 @@ class CustomerRepository {
     });
     
     this.customers.set(id, record);
-
-    // Replicate Activation to other shops
-    const otherShops = [
-      ShopId.RAJ_FRUITS_AND_VEGETABLES,
-      ShopId.G_R_FRUITS_AND_VEGETABLES,
-      ShopId.PRIYAKRISHNA_FRUITS_AND_VEGETABLES
-    ].filter((sId) => sId !== record.shopId);
-
-    for (const otherShopId of otherShops) {
-      const match = await this.findByName(otherShopId, record.name);
-      if (match) {
-        await db.query(`customers?id=eq.${match.id}`, {
-          method: 'PATCH',
-          body: {
-            status: 'active',
-            updated_at: now,
-          }
-        });
-        const currentCached = this.customers.get(match.id);
-        if (currentCached) {
-          currentCached.status = 'active';
-          currentCached.updatedAt = now;
-          this.customers.set(match.id, currentCached);
-        }
-      }
-    }
 
     return true;
   }

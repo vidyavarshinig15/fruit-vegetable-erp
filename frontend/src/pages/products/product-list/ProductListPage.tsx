@@ -585,15 +585,7 @@ export const ProductListPage: React.FC = () => {
                               <Copy className="w-4 h-4" />
                             </button>
 
-                            {prod.status === 'active' ? (
-                              <button
-                                onClick={() => handleArchive(prod.id, prod.name)}
-                                title="Archive Product (Soft Delete)"
-                                className="p-2 text-slate-400 hover:text-red-650 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-lg transition-colors"
-                              >
-                                <Archive className="w-4 h-4" />
-                              </button>
-                            ) : (
+                            {prod.status !== 'active' && (
                               <button
                                 onClick={() => handleActivate(prod.id)}
                                 title="Set Active"

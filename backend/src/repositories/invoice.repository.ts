@@ -69,15 +69,22 @@ class InvoiceRepository {
       shopCode = 'PK';
     }
 
-    const currentYear = new Date().getFullYear();
-    const pattern = `${shopCode}-${currentYear}-`;
+    // Query all invoices for this shop to determine the sequence number
+    const existing = await db.query<any>(`invoices?shop_id=eq.${shopId}`);
+    
+    let maxVal = 0;
+    for (const inv of existing) {
+      const invNum = inv.invoice_number;
+      if (/^\d+$/.test(invNum)) {
+        const val = parseInt(invNum, 10);
+        if (val > maxVal) {
+          maxVal = val;
+        }
+      }
+    }
 
-    // Query invoices count for this year
-    const existing = await db.query(`invoices?shop_id=eq.${shopId}&invoice_number=ilike.${pattern}*`);
-    const count = existing.length + 1;
-    const rand = Math.floor(100 + Math.random() * 900);
-
-    return `${pattern}${String(count).padStart(6, '0')}-${rand}`;
+    const nextVal = maxVal + 1;
+    return String(nextVal);
   }
 
   async findAllInvoices(shopId: ShopId, query: InvoiceFilterQuery = {}): Promise<{ invoices: Invoice[]; total: number }> {

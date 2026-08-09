@@ -135,9 +135,6 @@ export const ProductDetailsPage: React.FC = () => {
           <Button variant="secondary" size="sm" onClick={handleDuplicate} className="inline-flex items-center gap-1.5 font-bold py-2 text-xs text-sky-700">
             <Copy className="w-4 h-4" /> Duplicate
           </Button>
-          <Button variant="ghost" size="sm" onClick={handleArchive} className="inline-flex items-center gap-1.5 font-bold py-2 text-xs text-red-650 hover:bg-red-50">
-            <Archive className="w-4 h-4" /> Archive Item
-          </Button>
         </div>
       </div>
 
