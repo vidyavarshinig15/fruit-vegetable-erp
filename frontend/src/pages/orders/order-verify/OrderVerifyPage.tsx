@@ -97,6 +97,10 @@ export const OrderVerifyPage: React.FC = () => {
             const prod = products.find((p) => p.id === value);
             updated.status = prod ? 'Matched' : 'Unmatched';
             updated.confidence = 'High'; // Manually confirmed matches are High confidence
+            if (prod) {
+              updated.productName = prod.name;
+              updated.unitType = prod.unitType;
+            }
           }
           return updated;
         }
@@ -109,7 +113,7 @@ export const OrderVerifyPage: React.FC = () => {
   const handleAddRow = () => {
     const firstProduct = products[0];
     const newRow = {
-      productName: '',
+      productName: firstProduct ? firstProduct.name : 'New Item',
       quantity: 1,
       unitType: firstProduct ? firstProduct.unitType : 'Kg',
       matchedProductId: firstProduct ? firstProduct.id : null,

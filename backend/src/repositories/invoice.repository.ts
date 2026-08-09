@@ -120,7 +120,7 @@ class InvoiceRepository {
 
     const total = list.length;
     const page = query.page && query.page > 0 ? query.page : 1;
-    const limit = query.limit && query.limit > 0 ? query.limit : 50;
+    const limit = query.limit && query.limit > 0 ? query.limit : 10000;
     const startIndex = (page - 1) * limit;
 
     const paginated = list.slice(startIndex, startIndex + limit);

@@ -3,6 +3,7 @@ import { db } from '../database/index.js';
 import fs from 'fs';
 import path from 'path';
 import { parsePdfContent } from '../utils/pdfParser.js';
+import { parseImageOcr, parseTextOrderLines } from '../utils/ocrParser.js';
 
 // Helper to map Postgres SQL fields to Typescript camelCase fields
 export const mapDbToOrder = (dbRow: any, createdByName = 'System'): UploadedOrder => {
@@ -57,7 +58,7 @@ class OrderRepository {
 
     const total = list.length;
     const page = query.page && query.page > 0 ? query.page : 1;
-    const limit = query.limit && query.limit > 0 ? query.limit : 50;
+    const limit = query.limit && query.limit > 0 ? query.limit : 10000;
     const startIndex = (page - 1) * limit;
 
     const paginated = list.slice(startIndex, startIndex + limit);
@@ -358,6 +359,27 @@ class OrderRepository {
         }
       } catch (e) {
         console.error('Failed to parse PDF using pdf-parse:', e);
+      }
+    } else if (fileType === 'text/plain') {
+      try {
+        const textContent = buffer.toString('utf-8');
+        const extracted = parseTextOrderLines(textContent);
+        if (extracted.length > 0) {
+          rawExtracted = extracted;
+          parsedSuccess = true;
+        }
+      } catch (e) {
+        console.error('Failed to parse plain text order:', e);
+      }
+    } else if (fileType.startsWith('image/')) {
+      try {
+        const extracted = await parseImageOcr(buffer);
+        if (extracted.length > 0) {
+          rawExtracted = extracted;
+          parsedSuccess = true;
+        }
+      } catch (e) {
+        console.error('Failed to parse image using Tesseract OCR:', e);
       }
     }
 

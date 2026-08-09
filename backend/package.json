@@ -26,6 +26,7 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "pdf-parse": "^2.4.5",
+    "tesseract.js": "^7.0.0",
     "winston": "^3.13.0",
     "zod": "^3.22.4"
   },

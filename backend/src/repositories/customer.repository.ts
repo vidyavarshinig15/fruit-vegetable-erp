@@ -164,17 +164,28 @@ class CustomerRepository {
   }
 
   private generateNextCustomerCode(shopId: ShopId): string {
-    let prefix = 'RAJC';
+    let prefix = 'RAJ ';
     if (shopId === ShopId.G_R_FRUITS_AND_VEGETABLES) {
-      prefix = 'GRC';
+      prefix = 'GR ';
     } else if (shopId === ShopId.PRIYAKRISHNA_FRUITS_AND_VEGETABLES) {
-      prefix = 'PKC';
+      prefix = 'PK ';
     }
 
     const list = Array.from(this.customers.values()).filter((c) => c.shopId === shopId);
-    const count = list.length + 1;
-    const rand = Math.floor(100 + Math.random() * 900);
-    return `${prefix}${String(count).padStart(5, '0')}-${rand}`;
+    
+    let maxSeq = 0;
+    for (const c of list) {
+      if (c.customerCode && c.customerCode.startsWith(prefix)) {
+        const numStr = c.customerCode.substring(prefix.length).trim();
+        const num = parseInt(numStr, 10);
+        if (!isNaN(num) && num > maxSeq) {
+          maxSeq = num;
+        }
+      }
+    }
+
+    const nextSeq = maxSeq + 1;
+    return `${prefix}${nextSeq}`;
   }
 
   private async syncFromDb(): Promise<void> {
@@ -302,7 +313,7 @@ class CustomerRepository {
 
     const total = list.length;
     const page = query.page && query.page > 0 ? query.page : 1;
-    const limit = query.limit && query.limit > 0 ? query.limit : 50;
+    const limit = query.limit && query.limit > 0 ? query.limit : 10000;
     const startIndex = (page - 1) * limit;
 
     const paginated = list.slice(startIndex, startIndex + limit).map((c) => ({ ...c }));
