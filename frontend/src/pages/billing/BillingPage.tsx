@@ -138,6 +138,7 @@ export const BillingPage: React.FC = () => {
   const [selectedProductId, setSelectedProductId] = useState('');
   const [entryQty, setEntryQty] = useState<number>(1);
   const [entryPrice, setEntryPrice] = useState<number>(0);
+  const [entryUnitType, setEntryUnitType] = useState<string>('KG');
 
   // Preview Overlay toggle
   const [showPreview, setShowPreview] = useState(false);
@@ -146,6 +147,8 @@ export const BillingPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  
+  const [hasRestoredDraft, setHasRestoredDraft] = useState(false);
 
   // Fetch shop-scoped customers & products
   const fetchInventory = useCallback(async () => {
@@ -158,7 +161,6 @@ export const BillingPage: React.FC = () => {
       ]);
 
       if (custRes.data?.success) {
-        // filter out inactive or archived customers
         setCustomers((custRes.data.data || []).filter((c: any) => c.status === 'active'));
       }
       if (prodRes.data?.success) {
@@ -190,12 +192,54 @@ export const BillingPage: React.FC = () => {
         totalPrice: item.quantity * item.unitPrice,
       }));
       setItems(mapped);
+      localStorage.removeItem('in_progress_billing_draft');
     } else {
-      // Reset draft state
-      setCustomerId('');
-      setItems([]);
+      const saved = localStorage.getItem('in_progress_billing_draft');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.customerId || parsed.items?.length > 0 || parsed.notes) {
+            setCustomerId(parsed.customerId || '');
+            setItems(parsed.items || []);
+            if (parsed.invoiceDate) setInvoiceDate(parsed.invoiceDate);
+            if (parsed.notes) setNotes(parsed.notes);
+            setHasRestoredDraft(true);
+          }
+        } catch (e) {
+          console.error('Failed to parse saved billing draft', e);
+        }
+      } else {
+        setCustomerId('');
+        setItems([]);
+        setNotes('');
+      }
     }
   }, [fetchInventory, activeShop, location.state]);
+
+  // Auto-save draft state on edits
+  useEffect(() => {
+    if (customerId || items.length > 0 || notes) {
+      const draft = {
+        customerId,
+        items,
+        invoiceDate,
+        notes,
+      };
+      localStorage.setItem('in_progress_billing_draft', JSON.stringify(draft));
+    } else {
+      localStorage.removeItem('in_progress_billing_draft');
+      setHasRestoredDraft(false);
+    }
+  }, [customerId, items, invoiceDate, notes]);
+
+  const handleResetDraft = () => {
+    localStorage.removeItem('in_progress_billing_draft');
+    setCustomerId('');
+    setItems([]);
+    setNotes('');
+    setHasRestoredDraft(false);
+    (window as any).unsavedChanges = false;
+  };
 
   // Handle selected product change to update default rate
   const handleProductSelectChange = (prodId: string) => {
@@ -203,8 +247,10 @@ export const BillingPage: React.FC = () => {
     const prod = products.find((p) => p.id === prodId);
     if (prod) {
       setEntryPrice(prod.defaultRate);
+      setEntryUnitType(prod.unitType || 'KG');
     } else {
       setEntryPrice(0);
+      setEntryUnitType('KG');
     }
     setEntryQty(1);
   };
@@ -248,7 +294,7 @@ export const BillingPage: React.FC = () => {
     const newLine: InvoiceLineItem = {
       productId: selectedProductId,
       productName: prod.name,
-      unitType: prod.unitType,
+      unitType: entryUnitType,
       quantity: Number(entryQty),
       unitPrice: Number(entryPrice),
       originalPrice: prod.defaultRate,
@@ -263,8 +309,8 @@ export const BillingPage: React.FC = () => {
     setEntryPrice(0);
   };
 
-  // Update Item Quantity/Price Inline
-  const handleUpdateItem = (prodId: string, qty: number, price: number) => {
+  // Update Item Quantity/Price/Unit Inline
+  const handleUpdateItem = (prodId: string, qty: number, price: number, unitType?: string) => {
     (window as any).unsavedChanges = true;
     setItems((prev) =>
       prev.map((item) => {
@@ -275,6 +321,7 @@ export const BillingPage: React.FC = () => {
             ...item,
             quantity: newQty,
             unitPrice: newPrice,
+            unitType: unitType || item.unitType,
             totalPrice: newQty * newPrice,
           };
         }
@@ -362,6 +409,9 @@ export const BillingPage: React.FC = () => {
           }
         }
 
+        // Clear saved draft from localStorage
+        localStorage.removeItem('in_progress_billing_draft');
+
         // Reset dirty flag
         (window as any).unsavedChanges = false;
         alert('Invoice successfully generated and locked!');
@@ -383,6 +433,21 @@ export const BillingPage: React.FC = () => {
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
+      {hasRestoredDraft && (
+        <div className="p-4 bg-amber-50 dark:bg-amber-950/40 border border-amber-250 dark:border-amber-850/60 rounded-2xl flex items-center justify-between gap-4 text-amber-900 dark:text-amber-300 font-bold text-sm">
+          <div className="flex items-center gap-2">
+            <span className="animate-pulse w-2.5 h-2.5 bg-amber-500 rounded-full shrink-0" />
+            <span>Restored draft billing workspace from unsaved sessions.</span>
+          </div>
+          <button
+            onClick={handleResetDraft}
+            className="text-xs uppercase bg-amber-200 dark:bg-amber-900 hover:bg-amber-300 dark:hover:bg-amber-850 px-3 py-1.5 rounded-lg transition-colors cursor-pointer font-extrabold"
+          >
+            Clear Draft
+          </button>
+        </div>
+      )}
+
       {/* Page Title */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
         <div>
@@ -460,7 +525,7 @@ export const BillingPage: React.FC = () => {
               </label>
             </div>
 
-            <form onSubmit={handleAddItem} className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-end bg-slate-50 dark:bg-slate-950/20 p-4 border border-slate-150 dark:border-slate-800 rounded-2xl mb-4">
+            <form onSubmit={handleAddItem} className="grid grid-cols-1 sm:grid-cols-5 gap-4 items-end bg-slate-50 dark:bg-slate-950/20 p-4 border border-slate-150 dark:border-slate-800 rounded-2xl mb-4">
               <div className="sm:col-span-2">
                 <Select
                   label="Select Item *"
@@ -482,6 +547,21 @@ export const BillingPage: React.FC = () => {
                 onChange={(e) => setEntryQty(Number(e.target.value))}
               />
 
+              <Select
+                label="Unit *"
+                value={entryUnitType}
+                onChange={(e) => setEntryUnitType(e.target.value)}
+                options={[
+                  { value: 'KG', label: 'KG' },
+                  { value: 'CRATE', label: 'Crate' },
+                  { value: 'BAG', label: 'Bag' },
+                  { value: 'BOX', label: 'Box' },
+                  { value: 'PIECE', label: 'Piece' },
+                  { value: 'DOZEN', label: 'Dozen' },
+                  { value: 'QUINTAL', label: 'Quintal' },
+                ]}
+              />
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Rate (₹) *</label>
                 <input
@@ -499,7 +579,7 @@ export const BillingPage: React.FC = () => {
                 />
               </div>
 
-              <div className="sm:col-span-4 flex justify-end">
+              <div className="sm:col-span-5 flex justify-end">
                 <Button type="submit" variant="secondary" className="inline-flex items-center gap-1.5 font-bold text-xs py-2 px-4" disabled={!selectedProductId}>
                   <Plus className="w-4.5 h-4.5" /> Append Item
                 </Button>
@@ -532,7 +612,21 @@ export const BillingPage: React.FC = () => {
                       <tr key={item.productId} className="border-b border-slate-100 dark:border-slate-850 font-bold text-slate-750 dark:text-slate-200">
                         <td className="py-3 text-slate-450">{idx + 1}</td>
                         <td className="py-3 uppercase text-slate-900 dark:text-white font-extrabold">{item.productName}</td>
-                        <td className="py-3 text-center"><Badge variant="info">{item.unitType}</Badge></td>
+                        <td className="py-1 text-center">
+                          <select
+                            value={item.unitType}
+                            onChange={(e) => handleUpdateItem(item.productId, item.quantity, item.unitPrice, e.target.value)}
+                            className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-1 text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-market-700 cursor-pointer"
+                          >
+                            <option value="KG">KG</option>
+                            <option value="CRATE">Crate</option>
+                            <option value="BAG">Bag</option>
+                            <option value="BOX">Box</option>
+                            <option value="PIECE">Piece</option>
+                            <option value="DOZEN">Dozen</option>
+                            <option value="QUINTAL">Quintal</option>
+                          </select>
+                        </td>
                         <td className="py-1 text-right">
                           <input
                             type="number"
