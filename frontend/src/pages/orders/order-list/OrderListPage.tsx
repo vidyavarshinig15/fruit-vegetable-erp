@@ -41,8 +41,6 @@ export const OrderListPage: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   // Upload states integrated directly
-  const [ingestMode, setIngestMode] = useState<'file' | 'text'>('file');
-  const [pastedText, setPastedText] = useState('');
   const [customerId, setCustomerId] = useState('');
   const [dragOver, setDragOver] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -84,34 +82,20 @@ export const OrderListPage: React.FC = () => {
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!customerId) return;
-    if (ingestMode === 'file' && !selectedFile) return;
-    if (ingestMode === 'text' && !pastedText.trim()) return;
+    if (!customerId || !selectedFile) return;
 
     setIsProcessing(true);
     setErrorMsg(null);
     try {
-      let payload;
-      if (ingestMode === 'file' && selectedFile) {
-        const base64Data = await fileToBase64(selectedFile);
-        payload = {
-          customerId,
-          fileName: selectedFile.name,
-          fileType: selectedFile.type,
-          fileSizeBytes: selectedFile.size,
-          fileData: base64Data,
-        };
-      } else {
-        const textBytes = new TextEncoder().encode(pastedText);
-        const base64Data = btoa(unescape(encodeURIComponent(pastedText)));
-        payload = {
-          customerId,
-          fileName: 'pasted_order_message.txt',
-          fileType: 'text/plain',
-          fileSizeBytes: textBytes.length,
-          fileData: base64Data,
-        };
-      }
+      const base64Data = await fileToBase64(selectedFile);
+      
+      const payload = {
+        customerId,
+        fileName: selectedFile.name,
+        fileType: selectedFile.type,
+        fileSizeBytes: selectedFile.size,
+        fileData: base64Data,
+      };
 
       const res = await api.post('/orders', payload);
       if (res.data?.success && res.data?.data) {
@@ -264,34 +248,9 @@ export const OrderListPage: React.FC = () => {
           </p>
         </div>
       ) : (
-        <Card title="Direct Ingest Inbound Order" subtitle="Process and match item listings instantly.">
-          <div className="flex gap-4 border-b border-slate-200 dark:border-slate-800 pb-3 mb-4">
-            <button
-              type="button"
-              onClick={() => setIngestMode('file')}
-              className={`pb-2 text-xs font-black uppercase tracking-wider transition-colors border-b-2 ${
-                ingestMode === 'file'
-                  ? 'border-market-700 text-market-700'
-                  : 'border-transparent text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              📄 Upload PDF / Image Photo
-            </button>
-            <button
-              type="button"
-              onClick={() => setIngestMode('text')}
-              className={`pb-2 text-xs font-black uppercase tracking-wider transition-colors border-b-2 ${
-                ingestMode === 'text'
-                  ? 'border-market-700 text-market-700'
-                  : 'border-transparent text-slate-400 hover:text-slate-600'
-              }`}
-            >
-              ✍️ Paste WhatsApp / Raw Text
-            </button>
-          </div>
-
+        <Card title="Direct Ingest Order PDF/Image" subtitle="Upload and match item listings instantly.">
           <form onSubmit={handleUploadSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="flex flex-col justify-between h-full">
+            <div className="flex flex-col justify-between">
               <Select
                 label="Select Wholesale Customer *"
                 required
@@ -303,57 +262,43 @@ export const OrderListPage: React.FC = () => {
                 ]}
               />
               <div className="pt-4 flex justify-start">
-                <Button type="submit" variant="primary" disabled={!customerId || (ingestMode === 'file' ? !selectedFile : !pastedText.trim())} className="w-full md:w-auto">
-                  <UploadCloud className="w-4 h-4 mr-2" /> {ingestMode === 'file' ? 'Upload & Process File' : 'Process Raw Text Order'}
+                <Button type="submit" variant="primary" disabled={!customerId || !selectedFile} className="w-full md:w-auto">
+                  <UploadCloud className="w-4 h-4 mr-2" /> Upload & Process Order
                 </Button>
               </div>
             </div>
-            
-            {ingestMode === 'file' ? (
-              <div
-                onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDragOver(false);
-                  const file = e.dataTransfer.files?.[0];
+            <div
+              onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragOver(false);
+                const file = e.dataTransfer.files?.[0];
+                if (file) validateAndSetFile(file);
+              }}
+              className={`border-4 border-dashed rounded-2xl p-6 text-center transition-all flex flex-col justify-center items-center cursor-pointer ${
+                dragOver
+                  ? 'border-market-700 bg-market-50/20'
+                  : 'border-slate-250 dark:border-slate-800 bg-slate-50/50 hover:bg-slate-50'
+              }`}
+              onClick={() => document.getElementById('direct-file-input')?.click()}
+            >
+              <input
+                id="direct-file-input"
+                type="file"
+                accept="application/pdf,image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
                   if (file) validateAndSetFile(file);
                 }}
-                className={`border-4 border-dashed rounded-2xl p-6 text-center transition-all flex flex-col justify-center items-center cursor-pointer ${
-                  dragOver
-                    ? 'border-market-700 bg-market-50/20'
-                    : 'border-slate-250 dark:border-slate-800 bg-slate-50/50 hover:bg-slate-50'
-                }`}
-                onClick={() => document.getElementById('direct-file-input')?.click()}
-              >
-                <input
-                  id="direct-file-input"
-                  type="file"
-                  accept="application/pdf,image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) validateAndSetFile(file);
-                  }}
-                />
-                <UploadCloud className="w-8 h-8 text-slate-400 mb-2" />
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
-                  {selectedFile ? selectedFile.name : 'Drag Order PDF/Image Here or Click'}
-                </span>
-                <span className="text-[10px] text-slate-400 mt-1 uppercase block">PDF / PNG / JPEG (max 20MB)</span>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-1.5 h-full">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-500">Paste Order Text *</label>
-                <textarea
-                  value={pastedText}
-                  onChange={(e) => setPastedText(e.target.value)}
-                  rows={4}
-                  placeholder="Paste raw text here...&#10;e.g.&#10;Palak. 10&#10;mango . 15kg&#10;orange . 5kg"
-                  className="w-full flex-grow px-4 py-3 bg-slate-50 border border-slate-200 dark:border-slate-750 rounded-2xl text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-market-700 min-h-[120px] bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700"
-                />
-              </div>
-            )}
+              />
+              <UploadCloud className="w-8 h-8 text-slate-400 mb-2" />
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider block">
+                {selectedFile ? selectedFile.name : 'Drag Order PDF/Image Here or Click'}
+              </span>
+              <span className="text-[10px] text-slate-400 mt-1 uppercase block">PDF / PNG / JPEG (max 20MB)</span>
+            </div>
           </form>
         </Card>
       )}

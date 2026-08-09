@@ -4,8 +4,7 @@ const allowedMimeTypes = [
   'application/pdf',
   'image/png',
   'image/jpeg',
-  'image/webp',
-  'text/plain'
+  'image/webp'
 ];
 
 export const uploadOrderSchema = z.object({
