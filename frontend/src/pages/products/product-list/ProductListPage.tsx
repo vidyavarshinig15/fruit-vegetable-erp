@@ -24,6 +24,7 @@ import {
   Info,
   DollarSign,
   UploadCloud,
+  Trash2,
 } from 'lucide-react';
 
 export const ProductListPage: React.FC = () => {
@@ -143,7 +144,7 @@ export const ProductListPage: React.FC = () => {
 
   // Soft Delete / Archive
   const handleArchive = async (id: string, name: string) => {
-    const confirmArchive = window.confirm(`Archive ${name}? Cloned references will remain in invoices, but it will be hidden from daily listings.`);
+    const confirmArchive = window.confirm(`Are you sure you want to delete "${name}"? Historical invoice records will remain intact, but it will be hidden from future catalog listings.`);
     if (!confirmArchive) return;
 
     try {
@@ -151,7 +152,7 @@ export const ProductListPage: React.FC = () => {
       fetchProducts();
       fetchDashboardStats();
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Archive action failed.');
+      alert(err.response?.data?.message || 'Delete action failed.');
     }
   };
 
@@ -583,6 +584,14 @@ export const ProductListPage: React.FC = () => {
                               className="p-2 text-slate-500 hover:text-sky-600 hover:bg-sky-50 dark:hover:bg-sky-950/20 rounded-lg transition-colors"
                             >
                               <Copy className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => handleArchive(prod.id, prod.name)}
+                              title="Delete Product"
+                              className="p-2 text-slate-500 hover:text-rose-650 hover:bg-rose-50 dark:hover:bg-rose-950/20 rounded-lg transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </button>
 
                             {prod.status !== 'active' && (

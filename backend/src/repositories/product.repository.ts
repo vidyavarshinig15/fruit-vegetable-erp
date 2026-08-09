@@ -108,7 +108,8 @@ class ProductRepository {
   }
 
   async findProductByName(shopId: ShopId, name: string): Promise<Product | null> {
-    const rows = await db.query(`products?shop_id=eq.${shopId}&name=eq.${encodeURIComponent(name)}&is_deleted=eq.false`);
+    const escapedName = name.replace(/[%_]/g, '\\$&');
+    const rows = await db.query(`products?shop_id=eq.${shopId}&name=ilike.${encodeURIComponent(escapedName)}&is_deleted=eq.false`);
     return rows.length > 0 ? mapDbToProduct(rows[0]) : null;
   }
 

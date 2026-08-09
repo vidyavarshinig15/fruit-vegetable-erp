@@ -18,6 +18,7 @@ import {
   ArrowLeft,
   Calendar,
   MessageSquare,
+  Trash2,
 } from 'lucide-react';
 
 export const ProductDetailsPage: React.FC = () => {
@@ -84,14 +85,14 @@ export const ProductDetailsPage: React.FC = () => {
   // Archive Soft Delete
   const handleArchive = async () => {
     if (!product) return;
-    const confirmArchive = window.confirm(`Archive ${product.name}? It will be hidden from catalog selections.`);
+    const confirmArchive = window.confirm(`Are you sure you want to delete "${product.name}"? Historical invoice records will remain intact, but it will be hidden from future catalog listings.`);
     if (!confirmArchive) return;
 
     try {
       await api.delete(`/products/${product.id}`);
       navigate('/products');
     } catch (err: any) {
-      alert(err.response?.data?.message || 'Archive failed.');
+      alert(err.response?.data?.message || 'Delete failed.');
     }
   };
 
@@ -134,6 +135,9 @@ export const ProductDetailsPage: React.FC = () => {
           </Link>
           <Button variant="secondary" size="sm" onClick={handleDuplicate} className="inline-flex items-center gap-1.5 font-bold py-2 text-xs text-sky-700">
             <Copy className="w-4 h-4" /> Duplicate
+          </Button>
+          <Button variant="secondary" size="sm" onClick={handleArchive} className="inline-flex items-center gap-1.5 font-bold py-2 text-xs text-rose-700">
+            <Trash2 className="w-4 h-4" /> Delete Product
           </Button>
         </div>
       </div>

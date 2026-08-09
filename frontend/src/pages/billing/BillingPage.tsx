@@ -579,7 +579,21 @@ export const BillingPage: React.FC = () => {
                 />
               </div>
 
-              <div className="sm:col-span-5 flex justify-end">
+              <div className="sm:col-span-5 flex justify-end gap-2">
+                {(items.length > 0 || customerId || notes) && (
+                  <Button
+                    type="button"
+                    variant="danger"
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to discard the current draft?')) {
+                        handleResetDraft();
+                      }
+                    }}
+                    className="inline-flex items-center gap-1.5 font-bold text-xs py-2 px-4"
+                  >
+                    Discard Draft
+                  </Button>
+                )}
                 <Button type="submit" variant="secondary" className="inline-flex items-center gap-1.5 font-bold text-xs py-2 px-4" disabled={!selectedProductId}>
                   <Plus className="w-4.5 h-4.5" /> Append Item
                 </Button>
